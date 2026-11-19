@@ -9,6 +9,11 @@ resources:
   - redirect.yaml
   - grafana.yaml
 configMapGenerator:
+  # cloudflared reads its config at startup; the generated name changes with the content, so a route
+  # change restarts the connector automatically.
+  - name: cloudflared
+    namespace: showcase
+    files: [config.yaml=cloudflared-config.yaml]
   # The public dashboard, as code. Only aggregate panels from Prometheus; no names, IPs or log content.
   - name: showcase-dashboard
     namespace: showcase
