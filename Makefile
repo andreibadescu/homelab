@@ -83,8 +83,8 @@ creds:
 	@echo "wrote ~/.homelab/talosconfig and ~/.homelab/kubeconfig"
 	@k=$$(grep client-certificate-data /root/.homelab/kubeconfig | awk '{print $$2}' | base64 -d | openssl x509 -noout -enddate | cut -d= -f2); \
 	t=$$(grep -m1 -E '^\s+crt:' /root/.homelab/talosconfig | awk '{print $$2}' | base64 -d | openssl x509 -noout -enddate | cut -d= -f2); \
-	printf '# Expiry of the admin credentials written by make creds (renew with make creds).\n# Checked monthly by .github/workflows/credential-expiry.yaml.\nkubeconfig: %s\ntalosconfig: %s\n' "$$(date -u -d "$$k" +%F)" "$$(date -u -d "$$t" +%F)" > credential-expiry.yaml
-	@cat credential-expiry.yaml
+	sed -i -E "s/^kubeconfig: .*/kubeconfig: $$(date -u -d "$$k" +%F)/; s/^talosconfig: .*/talosconfig: $$(date -u -d "$$t" +%F)/" credential-expiry.yaml
+	@grep -E '^(kubeconfig|talosconfig):' credential-expiry.yaml
 
 # Validate the rendered machine config with Talos's own validator. The config holds
 # secrets, so it only ever touches the container's RAM disk.
