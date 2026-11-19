@@ -104,6 +104,22 @@
         "ghcr.io/ente/web"
       ],
       "pinDigests": true
+    },
+    {
+      "description": "Small updates to what Flux deploys merge themselves once CI passes. OpenTofu-managed versions (Talos, Kubernetes, Cilium, Flux) never do: they need make apply.",
+      "matchManagers": [
+        "flux",
+        "kubernetes",
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "digest",
+        "pinDigest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     }
   ]
 }
