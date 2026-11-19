@@ -82,6 +82,8 @@ spec:
         feedback_links_enabled: false
       plugins:
         plugin_admin_enabled: false
+        # No downloads from grafana.com (the network policy would block them anyway).
+        preinstall_disabled: true
       news:
         news_feed_enabled: false
       unified_alerting:
@@ -132,8 +134,8 @@ spec:
             API=http://localhost:3000/api/dashboards/uid/homelab-showcase/public-dashboards
             while true; do
               if curl -sf http://localhost:3000/api/health >/dev/null; then
-                current=$(curl -s -u "$GF_USER:$GF_PASSWORD" "$API")
-                if ! echo "$current" | grep -q "\"accessToken\":\"$TOKEN\""; then
+                # Published means the public URL itself answers.
+                if ! curl -sf "http://localhost:3000/api/public/dashboards/$TOKEN" >/dev/null; then
                   curl -sf -u "$GF_USER:$GF_PASSWORD" -X POST -H "Content-Type: application/json" "$API" \
                     -d "{\"isEnabled\":true,\"share\":\"public\",\"accessToken\":\"$TOKEN\",\"timeSelectionEnabled\":false,\"annotationsEnabled\":false}" \
                     >/dev/null && echo "public dashboard published"
