@@ -1,10 +1,10 @@
-# Cloudflare Tunnel "homelab" (outbound only, no open ports). Only the public dashboard, its API calls
-# and Grafana's static files are routed; every other path returns 404 at Cloudflare's edge.
+# Cloudflare Tunnel connector (outbound only, no open ports). The tunnel, its routes and the token
+# Secret in this namespace are managed by OpenTofu (tofu/cloudflare.tf); the namespace too.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudflared
-  namespace: showcase
+  namespace: cloudflared
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,11 @@ spec:
       containers:
         - name: cloudflared
           image: docker.io/cloudflare/cloudflared:2026.11.1
-          args: [tunnel, --config, /etc/cloudflared/config.yaml, run]
+          args: [tunnel, --no-autoupdate, --metrics, 0.0.0.0:2000, run]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cloudflared-token, key: token}
           readinessProbe:
             httpGet: {path: /ready, port: 2000}
             periodSeconds: 10
@@ -33,11 +37,3 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: {drop: [ALL]}
-          volumeMounts:
-            - {name: config, mountPath: /etc/cloudflared/config.yaml, subPath: config.yaml, readOnly: true}
-            - {name: credentials, mountPath: /etc/cloudflared/credentials, readOnly: true}
-      volumes:
-        - name: config
-          configMap: {name: cloudflared}
-        - name: credentials
-          secret: {secretName: cloudflared-credentials}

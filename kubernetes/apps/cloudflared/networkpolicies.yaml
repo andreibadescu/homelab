@@ -1,0 +1,29 @@
+# Default deny; the connector may only reach Cloudflare's edge and the public showcase Grafana.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny, namespace: cloudflared}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: cloudflared, namespace: cloudflared}
+spec:
+  podSelector: {matchLabels: {app: cloudflared}}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    # Cloudflare's edge (public internet only; private ranges and the tailnet excluded).
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10]
+      ports: [{protocol: TCP, port: 7844}, {protocol: UDP, port: 7844}, {protocol: TCP, port: 443}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: showcase}}
+          podSelector: {matchLabels: {app.kubernetes.io/instance: grafana-public}}
+      ports: [{port: 3000}]

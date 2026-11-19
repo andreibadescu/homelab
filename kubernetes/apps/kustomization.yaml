@@ -4,3 +4,4 @@ resources:
   - ente
   - website-monitoring
   - showcase
+  - cloudflared

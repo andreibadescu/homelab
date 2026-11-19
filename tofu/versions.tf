@@ -59,5 +59,9 @@ terraform {
       source  = "tailscale/tailscale"
       version = "0.29.3"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "5.29.0"
+    }
   }
 }

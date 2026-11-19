@@ -1,5 +1,5 @@
-# Default deny, then only: the tunnel connector reaches Cloudflare and the two showcase services;
-# the public Grafana only reaches Prometheus. Nothing here can reach Ente, logs, the Kubernetes API
+# Default deny, then only: the tunnel connector (namespace cloudflared) reaches the public Grafana,
+# and the public Grafana reaches Prometheus. Nothing here can reach Ente, logs, the Kubernetes API
 # or the home network.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -22,43 +22,17 @@ spec:
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: cloudflared, namespace: showcase}
-spec:
-  podSelector: {matchLabels: {app: cloudflared}}
-  policyTypes: [Egress]
-  egress:
-    # Cloudflare's edge (public internet only; private ranges and the tailnet excluded).
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10]
-      ports: [{protocol: TCP, port: 7844}, {protocol: UDP, port: 7844}, {protocol: TCP, port: 443}]
-    - to: [{podSelector: {matchLabels: {app.kubernetes.io/instance: grafana-public}}}]
-      ports: [{port: 3000}]
-    - to: [{podSelector: {matchLabels: {app: showcase-redirect}}}]
-      ports: [{port: 8080}]
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
 metadata: {name: grafana-public, namespace: showcase}
 spec:
   podSelector: {matchLabels: {app.kubernetes.io/instance: grafana-public}}
   policyTypes: [Ingress, Egress]
   ingress:
-    - from: [{podSelector: {matchLabels: {app: cloudflared}}}]
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: cloudflared}}
+          podSelector: {matchLabels: {app: cloudflared}}
       ports: [{port: 3000}]
   egress:
     - to:
         - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: monitoring}}
           podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
       ports: [{port: 9090}]
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata: {name: showcase-redirect, namespace: showcase}
-spec:
-  podSelector: {matchLabels: {app: showcase-redirect}}
-  policyTypes: [Ingress]
-  ingress:
-    - from: [{podSelector: {matchLabels: {app: cloudflared}}}]
-      ports: [{port: 8080}]

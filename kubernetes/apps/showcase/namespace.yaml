@@ -1,5 +1,6 @@
 # Public showcase at https://homelab.andreibadescu.com: a separate, minimal Grafana that can only read
-# Prometheus, published through an outbound-only Cloudflare Tunnel. See README "Public showcase".
+# Prometheus, published through the Cloudflare Tunnel (tofu/cloudflare.tf, kubernetes/apps/cloudflared).
+# See README "Public showcase".
 apiVersion: v1
 kind: Namespace
 metadata:
