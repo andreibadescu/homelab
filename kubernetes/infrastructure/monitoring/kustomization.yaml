@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - grafana-admin.sops.yaml
+  - alertmanager-notify.sops.yaml
+  - release.yaml
+  - blackbox.yaml
+  - ingress.yaml
+  - flux-alerts.yaml

@@ -1,0 +1,79 @@
+# Persistent volumes for apps, on the encrypted Talos user volume "data" (/var/mnt/data).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # Upstream manifest pinned to a release tag (Renovate bumps the tag).
+  - https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.37/deploy/local-path-storage.yaml
+patches:
+  # The helper pods that create volume folders mount host paths, which Talos's default Pod
+  # Security level forbids.
+  - target: {kind: Namespace, name: local-path-storage}
+    patch: |-
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: privileged
+  # Default storage class.
+  # - Retain: deleting a claim never deletes its data.
+  # - pathPattern: each volume lives in <namespace>/<claim>/, so a cluster rebuilt on the same
+  #   data volume finds its data again. Side effect: a claim deleted and recreated with the same
+  #   name gets its old data back (delete the folder to really start empty).
+  # - force: StorageClass parameters are immutable, so Flux recreates the class when they change
+  #   (existing volumes are not affected).
+  - target: {kind: StorageClass, name: local-path}
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          storageclass.kubernetes.io/is-default-class: "true"
+          kustomize.toolkit.fluxcd.io/force: enabled
+      - op: replace
+        path: /reclaimPolicy
+        value: Retain
+      - op: add
+        path: /parameters
+        value:
+          pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/"
+  - target: {kind: ConfigMap, name: local-path-config}
+    patch: |-
+      - op: replace
+        path: /data/config.json
+        value: |-
+          {"nodePathMap":[{"node":"DEFAULT_PATH_FOR_NON_LISTED_NODES","paths":["/var/mnt/data/local-path-provisioner"]}]}
+      - op: replace
+        path: /data/helperPod.yaml
+        value: |-
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: helper-pod
+          spec:
+            priorityClassName: system-node-critical
+            tolerations:
+              - key: node.kubernetes.io/disk-pressure
+                operator: Exists
+                effect: NoSchedule
+            containers:
+            - name: helper-pod
+              image: docker.io/library/busybox:1.38.0
+              imagePullPolicy: IfNotPresent
+  # The provisioner itself only talks to the Kubernetes API: no extra privileges.
+  - target: {kind: Deployment, name: local-path-provisioner}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: local-path-provisioner
+      spec:
+        template:
+          spec:
+            securityContext:
+              seccompProfile: {type: RuntimeDefault}
+            containers:
+              - name: local-path-provisioner
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities: {drop: [ALL]}
+                resources:
+                  requests: {cpu: 10m, memory: 32Mi}
+                  limits: {memory: 128Mi}

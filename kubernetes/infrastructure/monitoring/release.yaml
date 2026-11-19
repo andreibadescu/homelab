@@ -1,0 +1,135 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: monitoring
+spec:
+  interval: 1h
+  url: https://prometheus-community.github.io/helm-charts
+---
+# Prometheus, Alertmanager, Grafana, node-exporter and kube-state-metrics.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 30m
+  timeout: 10m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 93.4.1
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  values:
+    # Talos runs etcd, the scheduler and the controller-manager with metrics on localhost only, and
+    # Cilium replaces kube-proxy. Not scraping them also drops their alert rules.
+    kubeEtcd: {enabled: false}
+    kubeScheduler: {enabled: false}
+    kubeControllerManager: {enabled: false}
+    kubeProxy: {enabled: false}
+
+    prometheus:
+      prometheusSpec:
+        scrapeInterval: 60s
+        evaluationInterval: 60s
+        retention: 15d
+        retentionSize: 8GB
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              accessModes: [ReadWriteOnce]
+              resources: {requests: {storage: 10Gi}}
+        # Pick up monitors and rules from every namespace, not only this chart's.
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        resources:
+          requests: {cpu: 100m, memory: 400Mi}
+          limits: {memory: 1536Mi}
+
+    alertmanager:
+      alertmanagerSpec:
+        # Mounted at /etc/alertmanager/secrets/alertmanager-notify/.
+        secrets: [alertmanager-notify]
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {memory: 128Mi}
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          receiver: ntfy
+          group_by: [alertname, namespace]
+          group_wait: 1m
+          group_interval: 10m
+          repeat_interval: 12h
+          routes:
+            # Dead man's switch: Watchdog always fires and pings healthchecks.io about every minute.
+            # If the pings stop (server, network or Alertmanager down), healthchecks.io alerts the
+            # same ntfy topic after about 15 minutes (5-minute period + 10-minute grace).
+            - receiver: healthchecks
+              matchers: ['alertname = "Watchdog"']
+              group_wait: 0s
+              group_interval: 1m
+              repeat_interval: 1m
+            # Informational alerts stay in Alertmanager and Grafana; only warning and critical
+            # reach the phone.
+            - receiver: "null"
+              matchers: ['severity = "info"']
+        inhibit_rules:
+          # A critical alert silences the warning/info version of the same alert.
+          - source_matchers: ['severity = "critical"']
+            target_matchers: ['severity =~ "warning|info"']
+            equal: [namespace, alertname]
+          - source_matchers: ['severity = "warning"']
+            target_matchers: ['severity = "info"']
+            equal: [namespace, alertname]
+        receivers:
+          - name: "null"
+          - name: ntfy
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/alertmanager-notify/ntfy-url
+                send_resolved: true
+          - name: healthchecks
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/alertmanager-notify/healthchecks-url
+                send_resolved: false
+
+    grafana:
+      # Stateless: dashboards and the Prometheus data source come from the chart, the login from a
+      # SOPS secret. Reached at https://grafana.junco-ulmer.ts.net (ingress.yaml).
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+      grafana.ini:
+        server:
+          root_url: https://grafana.junco-ulmer.ts.net
+        analytics:
+          reporting_enabled: false
+          check_for_updates: false
+          check_for_plugin_updates: false
+      resources:
+        requests: {cpu: 20m, memory: 256Mi}
+        limits: {memory: 512Mi}
+
+    prometheusOperator:
+      resources:
+        requests: {cpu: 10m, memory: 48Mi}
+        limits: {memory: 192Mi}
+    kube-state-metrics:
+      resources:
+        requests: {cpu: 10m, memory: 48Mi}
+        limits: {memory: 192Mi}
+    prometheus-node-exporter:
+      resources:
+        requests: {cpu: 10m, memory: 24Mi}
+        limits: {memory: 96Mi}

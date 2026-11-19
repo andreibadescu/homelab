@@ -1,0 +1,22 @@
+# Flux reports failed reconciliations to Alertmanager, so they reach the phone like any alert. The
+# Kustomizations wait for their HelmReleases, so a failing chart shows up here too.
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Provider
+metadata:
+  name: alertmanager
+  namespace: flux-system
+spec:
+  type: alertmanager
+  address: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093/api/v2/alerts
+---
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Alert
+metadata:
+  name: flux-errors
+  namespace: flux-system
+spec:
+  providerRef: {name: alertmanager}
+  eventSeverity: error
+  eventSources:
+    - {kind: GitRepository, name: "*"}
+    - {kind: Kustomization, name: "*"}

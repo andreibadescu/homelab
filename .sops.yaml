@@ -1,0 +1,10 @@
+creation_rules:
+  # Kubernetes secrets: readable by you (personal key) and by Flux in the cluster.
+  - path_regex: kubernetes/.*\.sops\.ya?ml$
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08,
+      age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+  # Everything else (OpenTofu secrets): only you.
+  - path_regex: \.sops\.ya?ml$
+    age: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08

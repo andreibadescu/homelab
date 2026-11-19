@@ -1,0 +1,35 @@
+# Where Alertmanager sends notifications. The ntfy topic works like a password. Show it: make shell, then
+#   sops -d --extract "[\"stringData\"][\"ntfy-url\"]" kubernetes/infrastructure/monitoring/alertmanager-notify.sops.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+    name: alertmanager-notify
+    namespace: monitoring
+type: Opaque
+stringData:
+    ntfy-url: ENC[AES256_GCM,data:FZIIxtbmOX+qV3Yth9nvzauPqofnuorq1BuZvWKGly+ZzXNKqoufawDP+n43TeNt0yNmXQnjsPOD6DLJ7AlSQYen+tp/nQ==,iv:QzRPuQt3Ji7BbbucD6C/DjjHe2JwrTtkTr51zbB246I=,tag:QtJn79zXeT1BN16zRulYdw==,type:str]
+    healthchecks-url: ENC[AES256_GCM,data:dxrUa4rIFYqGmbFQIxWLmjPQUzTzxPh0XWcmx9U1gklx+DvDCNaOdKAx604WbuOSQIAD1r7GfgU=,iv:TkDv43i+jecU0E7568V1/AoXjljz3jHOkG+8FgAGPgo=,tag:ajrHNzmyXYoCJgylmBUW0Q==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBsZkF1MytvbmNIbzRzK1Iz
+            RldIVkxud083VXV4ZmlpY3FWRjhwWnpodWhzCmlFei9ZcStkYXhGYm16K1NFYUlY
+            ZGZtc29ONzNObVAwd296dXc1Tlhzb3MKLS0tIHdsSHRJNUkxNFFLQnVaVWY2c0FV
+            akgxNGNHKzN5bm5UZElsZnR5UXhDTDgKaNb2OW4MZrnDciUC0eJnaUokEjVSjelu
+            f9xGWHq8CcO1q/KJb3So/jPQ7ioMTJj/yOX/g4FS4tMzYTL1F+HrGA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBHbGZZNVJHM2pTaGEwMXZH
+            eE1wZ25BdHJxRlZnTHNhQ2dsMnFVa3EvV2xNCi9EWWNKVE1XQ1dvazI3TldPTXhn
+            UVhMcjREaFUzbDBvd3lTaTVscFBLdk0KLS0tIGlFTmNkczNmcm5iZDRxVzRGaGVQ
+            VUlHTjdjZFZuL01yTjNsZHVzNDljQ3MKr7epGLM2venQH8E+4x3BcUWuQaEct424
+            FV9OvDSavCgAIH9Nx8eNvde0SaIEflf3AqGvpfKuvT7DdUMYsVk8FA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-19T19:35:17Z"
+    mac: ENC[AES256_GCM,data:vFUD1v7FxNwkKuS/xVWZgxrQqAqcwbJegghQtqJe0XiKD+8T9vHc09ujcLLoHZvbel+RQVdRgXVFA8e2xMdzyFdpf0+abpZEJ/pccKmoBofztmygMp89pLaxFEm2sAVU4+4b4kigJrWGJT9onrOybUtJmJV9QxIWBiZwN5Rcm1k=,iv:v4fsKn9akXhE8HR9tLrXPbmSlVcpP7TQOpua7i3mPPQ=,tag:yedDsrremdPaVou3UKsMpA==,type:str]
+    version: 3.13.3

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "ignoreUnstable": true,
+  "minimumReleaseAge": null,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Tool versions in the toolbox image",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\S+_VERSION=(?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Versions pinned as OpenTofu variable defaults",
+      "managerFilePatterns": [
+        "/\\.tf$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Upstream manifests referenced by release tag in kustomization.yaml",
+      "managerFilePatterns": [
+        "/^kubernetes/.+/kustomization\\.yaml$/"
+      ],
+      "matchStrings": [
+        "https://raw\\.githubusercontent\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/(?<currentValue>v[^/\\s]+)/"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "flux": {
+    "managerFilePatterns": [
+      "/^kubernetes/.+\\.ya?ml$/"
+    ]
+  },
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/^kubernetes/.+\\.ya?ml$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Talos: the OS version (tofu) and talosctl (toolbox) move together",
+      "matchDepNames": [
+        "siderolabs/talos"
+      ],
+      "groupName": "Talos"
+    },
+    {
+      "description": "Kubernetes: the cluster version (tofu) and kubectl (toolbox) move together",
+      "matchDepNames": [
+        "kubernetes/kubernetes"
+      ],
+      "groupName": "Kubernetes"
+    },
+    {
+      "description": "Flux: the installed version (tofu flux_version) and the flux CLI (toolbox) move together",
+      "matchDepNames": [
+        "fluxcd/flux2"
+      ],
+      "groupName": "Flux"
+    },
+    {
+      "description": "Flux's own manifests are written by the OpenTofu bootstrap when flux_version changes; don't edit them directly",
+      "matchManagers": [
+        "flux",
+        "kubernetes"
+      ],
+      "matchFileNames": [
+        "kubernetes/clusters/homelab/flux-system/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Ente supports PostgreSQL 15; a new major version needs a dump and restore, so stay on 15.x",
+      "matchPackageNames": [
+        "docker.io/library/postgres"
+      ],
+      "allowedVersions": "/^15\\./"
+    },
+    {
+      "description": "pgsty/silo (MinIO build) uses date-based RELEASE tags",
+      "matchPackageNames": [
+        "docker.io/pgsty/silo"
+      ],
+      "versioning": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})T(?<build>\\d{2})-\\d{2}-\\d{2}Z$"
+    },
+    {
+      "description": "Ente publishes only latest plus commit tags: follow the latest digest",
+      "matchPackageNames": [
+        "ghcr.io/ente/server",
+        "ghcr.io/ente/web"
+      ],
+      "pinDigests": true
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: tailscale
+  namespace: tailscale
+spec:
+  interval: 1h
+  url: https://pkgs.tailscale.com/helmcharts
+---
+# Tailscale Kubernetes operator: exposes Tailscale Ingresses on the homelab tailnet
+# (junco-ulmer.ts.net). OAuth credentials come from the SOPS-encrypted operator-oauth secret.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale-operator
+  namespace: tailscale
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: tailscale-operator
+      version: 1.104.7
+      sourceRef:
+        kind: HelmRepository
+        name: tailscale
+  values:
+    operatorConfig:
+      hostname: homelab-operator
+      # No root, no privilege escalation. The operator keeps small state files under $HOME,
+      # so HOME points at the writable /tmp.
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: [ALL]}
+      extraEnv:
+        - {name: HOME, value: /tmp}
+      resources:
+        requests: {cpu: 10m, memory: 64Mi}
+        limits: {memory: 256Mi}

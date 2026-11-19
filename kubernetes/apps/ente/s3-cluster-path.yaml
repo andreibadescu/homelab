@@ -1,0 +1,18 @@
+# Museum must reach the storage at the same HTTPS name the phones use
+# (ente-s3.junco-ulmer.ts.net). This fixed in-cluster address points at the ente-s3
+# Tailscale proxy, which also listens on its pod IP thanks to the
+# experimental-forward-cluster-traffic-via-ingress annotation; museum maps the name to
+# it with hostAliases.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ente-s3-tailnet-proxy
+  namespace: tailscale
+spec:
+  clusterIP: 10.96.100.53
+  selector:
+    tailscale.com/parent-resource: ente-s3
+    tailscale.com/parent-resource-ns: ente
+    tailscale.com/parent-resource-type: ingress
+  ports:
+    - {name: https, port: 443, targetPort: 443}

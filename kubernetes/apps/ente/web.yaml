@@ -1,0 +1,46 @@
+# Ente web apps: Photos on 3000, Locker on 3009.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ente-web
+  namespace: ente
+spec:
+  selector: {app: ente-web}
+  ports:
+    - {name: photos, port: 3000}
+    - {name: locker, port: 3009}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ente-web
+  namespace: ente
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: ente-web}
+  template:
+    metadata:
+      labels: {app: ente-web}
+    spec:
+      automountServiceAccountToken: false
+      # Runs as root: the image's entrypoint writes ENTE_API_ORIGIN into its own files at start.
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: ghcr.io/ente/web:latest@sha256:01d8dfb3495d69d7d32ed962866307e4ae05a8d4ea55b4411afdc0d342f12c16
+          env:
+            - {name: ENTE_API_ORIGIN, value: "https://ente-api.junco-ulmer.ts.net"}
+          ports:
+            - {name: photos, containerPort: 3000}
+            - {name: locker, containerPort: 3009}
+          readinessProbe:
+            tcpSocket: {port: 3000}
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket: {port: 3000}
+            periodSeconds: 60
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 512Mi}
+          securityContext: {allowPrivilegeEscalation: false}

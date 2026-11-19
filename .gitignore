@@ -1,0 +1,23 @@
+# OpenTofu: the state is encrypted (tofu/versions.tf) and committed; backups are not.
+.terraform/
+*.tfstate
+*.tfstate.*
+!tofu/terraform.tfstate
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Credentials that must never be committed
+talosconfig
+kubeconfig
+*.agekey
+keys.txt
+*.decrypted.*
+.env
+.env.*
+
+# macOS
+.DS_Store

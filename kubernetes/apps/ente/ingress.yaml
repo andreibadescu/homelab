@@ -1,0 +1,44 @@
+# Reachable only on the tailnet: https://<name>.junco-ulmer.ts.net (Tailscale operator).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ente-api
+  namespace: ente
+spec:
+  ingressClassName: tailscale
+  defaultBackend: {service: {name: ente-museum, port: {number: 8080}}}
+  tls: [{hosts: [ente-api]}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ente-photos
+  namespace: ente
+spec:
+  ingressClassName: tailscale
+  defaultBackend: {service: {name: ente-web, port: {number: 3000}}}
+  tls: [{hosts: [ente-photos]}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ente-locker
+  namespace: ente
+spec:
+  ingressClassName: tailscale
+  defaultBackend: {service: {name: ente-web, port: {number: 3009}}}
+  tls: [{hosts: [ente-locker]}]
+---
+# Museum must reach the storage at the same HTTPS name as the phones, so this proxy also
+# listens inside the cluster.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ente-s3
+  namespace: ente
+  annotations:
+    tailscale.com/experimental-forward-cluster-traffic-via-ingress: "true"
+spec:
+  ingressClassName: tailscale
+  defaultBackend: {service: {name: ente-s3, port: {number: 3200}}}
+  tls: [{hosts: [ente-s3]}]

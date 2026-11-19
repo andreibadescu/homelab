@@ -1,0 +1,30 @@
+db:
+  host: ente-postgres
+  port: 5432
+  name: ente_db
+  user: pguser
+s3:
+  # Phones and museum both reach the storage over HTTPS at its Tailscale name.
+  are_local_buckets: false
+  use_path_style_urls: true
+  b2-eu-cen:
+    endpoint: ente-s3.junco-ulmer.ts.net
+    region: eu-central-2
+    bucket: b2-eu-cen
+  wasabi-eu-central-2-v3:
+    endpoint: ente-s3.junco-ulmer.ts.net
+    region: eu-central-2
+    bucket: wasabi-eu-central-2-v3
+    compliance: false
+  scw-eu-fr-v3:
+    endpoint: ente-s3.junco-ulmer.ts.net
+    region: eu-central-2
+    bucket: scw-eu-fr-v3
+replication:
+  enabled: false
+# No apps: section. Its URLs are for sharing links and for Ente's separate "accounts" web
+# app (passkeys, account-recovery links), neither of which runs here. Password + recovery
+# key work without them; use App lock (Face ID) in the apps for daily unlocking.
+internal:
+  # Closed: nobody can create an account. Set to false briefly to let someone new sign up.
+  disable-registration: true

@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: websites
+  namespace: monitoring
+spec:
+  groups:
+    - name: websites
+      rules:
+        # 5 minutes rides out short blips. If the home internet itself is down, these fire too and
+        # arrive once it is back; the healthchecks.io dead man's switch covers the homelab being down.
+        - alert: WebsiteDown
+          expr: probe_success{job="websites"} == 0
+          for: 5m
+          labels: {severity: critical}
+          annotations:
+            summary: "{{ $labels.instance }} is down"
+            description: "{{ $labels.instance }} has failed its check from the homelab for 5 minutes."
+        # Cloudflare renews these certificates; this catches a renewal that failed.
+        - alert: WebsiteCertificateExpiresSoon
+          expr: (probe_ssl_earliest_cert_expiry{job="websites"} - time()) / 86400 < 14
+          for: 1h
+          labels: {severity: warning}
+          annotations:
+            summary: "The certificate for {{ $labels.instance }} expires in {{ $value | humanize }} days"
+            description: "Check the TLS certificate settings for this domain in Cloudflare."

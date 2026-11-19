@@ -1,0 +1,35 @@
+# Grafana admin login (user "admin"). Show the password: make shell, then
+#   sops -d --extract "[\"stringData\"][\"admin-password\"]" kubernetes/infrastructure/monitoring/grafana-admin.sops.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+    name: grafana-admin
+    namespace: monitoring
+type: Opaque
+stringData:
+    admin-user: ENC[AES256_GCM,data:luj3yK4=,iv:1qBKdy5WniCsrnbOeMrGidvJ2wzdwNYfaNPvSdToT1g=,tag:aEGryvk4v7rtQ+O3IdNqSQ==,type:str]
+    admin-password: ENC[AES256_GCM,data:ptuA4KLVx77rBpvUvdA/lxCBTunxZd0uARHV6izpxZE=,iv:2MZ//rQjFH4E0bjMdWq4k7sy6YI232PLhwqyQnS/N80=,tag:6oMsgKZnk3vbuqVL3Rg1rg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnOWs5WFlBL1c3OHd5aDFB
+            ZGNBQy9aQ2VSajlZeUlUUG4xTkx0YVA3OUN3Ck1KVzJVN2t0VWR4dXhVajE5ZDVk
+            enFSV0xsU0tpZ05ITmVTSWpnSGpqQzgKLS0tIGpDeUY2Wlp2dFQyS2Nhb0dJU05U
+            SS90K0h0MmdKd2RSOXR6OE9tL2ZMNDgKVbYs/9FKXyLiu9zYgZwNYzJQfIKdbPiY
+            JFao0gpgliwQLH4BEWj9KN2KpAo1h8zkYvj+9O34HpAk6CQ1hycqUQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBzR1NBaW93VVFIMHYxTExD
+            WmFubGIrT2hTSnV2Nm1vMDRNZy85eE1FYkdRCmdBYWltUzhTcGtiRFdRcklsWnJB
+            aWQydEVNRUpRZHh3ZG1nbkZFTUlYak0KLS0tIHF5VHFLU3QzMDhzdWJ2MS9nSjJS
+            dHZsd1h5RjJ4QzBJOTBidlhBUFhCUlkKBgkuzdPHeomwJQaTzjnU4ELhHhzjQyjG
+            cIoBSfXmruL8FcC7F6BsujvWAuJmKBvYZO2eT6Px5Y4KEh2mC9Ca7Q==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-19T14:22:00Z"
+    mac: ENC[AES256_GCM,data:tPK+aHoll/oETq2RIImPTituV6KBlGX2JOsNZL+kBzLYxY7P1NdL8KAveH+8Xv74IbyZzkIeutLb6h/N5LygdmuqV+nZvvpPP7OP4YXhbFqoc3GAkTzj6p4OJImK2rDFXv4dAeRRltiZ9Yzq44GuAJdxY9fFk2VEPLfhQhzGWc4=,iv:/jfTYJkuhR4/6H5C8mKsOl242OKncc+A+DIB+lOztm4=,tag:9ZZfhHwhC2vG868eeaz2nA==,type:str]
+    version: 3.13.3

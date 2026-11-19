@@ -1,0 +1,52 @@
+# Ente's API server. Settings in config/museum.yaml; secrets come from ente-secrets as ENTE_* variables
+# (museum maps ENTE_S3_B2_EU_CEN_KEY to s3.b2-eu-cen.key, and so on).
+apiVersion: v1
+kind: Service
+metadata:
+  name: ente-museum
+  namespace: ente
+spec:
+  selector: {app: ente-museum}
+  ports: [{name: http, port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ente-museum
+  namespace: ente
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: ente-museum}
+  template:
+    metadata:
+      labels: {app: ente-museum}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      hostAliases:
+        - ip: 10.96.100.53
+          hostnames: [ente-s3.junco-ulmer.ts.net]
+      containers:
+        - name: museum
+          image: ghcr.io/ente/server:latest@sha256:f8c33e9bc1d5b7079dcda51522dd9f4fb28d93bef8655d95be54a978acc43408
+          envFrom:
+            - secretRef: {name: ente-museum-env}
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /ping, port: 8080}
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: {path: /ping, port: 8080}
+            initialDelaySeconds: 120
+            periodSeconds: 60
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 1Gi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: config, mountPath: /museum.yaml, subPath: museum.yaml, readOnly: true}
+      volumes:
+        - name: config
+          configMap: {name: ente-museum}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tailscale
+  labels:
+    # Tailscale proxy pods configure networking (NET_ADMIN, sysctls).
+    pod-security.kubernetes.io/enforce: privileged

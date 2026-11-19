@@ -1,0 +1,85 @@
+# S3-compatible storage for the encrypted files: the MinIO build Ente ships in its quickstart.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ente-s3
+  namespace: ente
+spec:
+  selector: {app: ente-s3}
+  ports: [{name: s3, port: 3200}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ente-s3
+  namespace: ente
+spec:
+  serviceName: ente-s3
+  replicas: 1
+  selector:
+    matchLabels: {app: ente-s3}
+  template:
+    metadata:
+      labels: {app: ente-s3}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: s3
+          image: docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z
+          args: [server, /data, --address, ":3200", --console-address, ":3201"]
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: MINIO_BROWSER, value: "off"}
+            - {name: MINIO_API_CORS_ALLOW_ORIGIN, value: "https://ente-photos.junco-ulmer.ts.net,https://ente-locker.junco-ulmer.ts.net"}
+            - name: MINIO_ROOT_USER
+              valueFrom: {secretKeyRef: {name: ente-secrets, key: S3_ACCESS_KEY}}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: {secretKeyRef: {name: ente-secrets, key: S3_SECRET_KEY}}
+          ports: [{name: s3, containerPort: 3200}]
+          readinessProbe:
+            httpGet: {path: /minio/health/ready, port: 3200}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /minio/health/live, port: 3200}
+            periodSeconds: 60
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 1Gi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: data, mountPath: /data}]
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 200Gi}}}
+---
+# Creates the three buckets museum expects (idempotent).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ente-s3-buckets
+  namespace: ente
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: buckets
+          image: docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z
+          command:
+            - sh
+            - -c
+            - |
+              until mc alias set s3 http://ente-s3:3200 "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null; do sleep 3; done
+              for b in b2-eu-cen wasabi-eu-central-2-v3 scw-eu-fr-v3; do mc mb -p "s3/$b"; done
+          env:
+            - {name: HOME, value: /tmp}
+            - name: S3_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: ente-secrets, key: S3_ACCESS_KEY}}
+            - name: S3_SECRET_KEY
+              valueFrom: {secretKeyRef: {name: ente-secrets, key: S3_SECRET_KEY}}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}

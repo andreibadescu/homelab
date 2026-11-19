@@ -1,0 +1,30 @@
+# Blackbox exporter: probes URLs for Prometheus (the targets and alert rules are in
+# kubernetes/apps/website-monitoring, applied after the monitoring stack and its CRDs exist).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus-blackbox-exporter
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: prometheus-blackbox-exporter
+      version: 11.21.3
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+  values:
+    config:
+      modules:
+        http_2xx:
+          prober: http
+          timeout: 10s
+          http:
+            valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+            follow_redirects: true
+            preferred_ip_protocol: ip4
+            fail_if_not_ssl: true
+    resources:
+      requests: {cpu: 10m, memory: 16Mi}
+      limits: {memory: 64Mi}

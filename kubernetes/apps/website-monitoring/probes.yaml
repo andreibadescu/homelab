@@ -1,0 +1,18 @@
+# Public websites, checked every minute from the homelab through the internet (and Cloudflare).
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: websites
+  namespace: monitoring
+spec:
+  jobName: websites
+  interval: 60s
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - https://enjoydevops.io/healthz             # the EnjoyDevOps app
+        - https://enjoydevops.io/auth/health/ready   # EnjoyDevOps sign-in (Kratos)
+        - https://andreibadescu.com/

@@ -1,0 +1,26 @@
+# Every pull request and push to main runs the same checks as `make check` locally: OpenTofu,
+# Kubernetes schemas, encrypted secrets, lint and gitleaks, inside the toolbox image.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks scans the whole history
+      - name: make check (in the toolbox)
+        env:
+          CRED_DIR: ${{ runner.temp }}/homelab
+          AGE_KEY: /dev/null
+        run: make check
+      - name: Renovate config
+        run: npx --yes --package renovate renovate-config-validator renovate.json
