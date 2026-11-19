@@ -93,6 +93,7 @@ works as a VS Code / Windsurf Dev Container.
 | `make check` | Every repository check, exactly as CI runs them |
 | `make fmt` / `make validate` | Format and validate the OpenTofu code |
 | `make upgrade`, then `make lock` | Move providers to new versions and record hashes for all platforms |
+| `make mac-dns` | On the admin Mac: resolve `*.ts.net` names through Tailscale only (asks for your password) |
 
 The Makefile passes your `gh auth token` to OpenTofu through the environment (for Flux's deploy key
 on GitHub). It is never written to disk.
@@ -103,11 +104,10 @@ on GitHub). It is never written to disk.
   `kubectl radar` or `sofka`. These work on the home network.
 - Reaching the apps (`*.junco-ulmer.ts.net`) needs the device shared to your Tailscale account and
   its name resolved. Phones use Tailscale DNS by default. On a Mac with **Use Tailscale DNS** off,
-  send only `ts.net` names to Tailscale's resolver and leave all other DNS unchanged:
-  `sudo mkdir -p /etc/resolver && echo "nameserver 100.100.100.100" | sudo tee /etc/resolver/ts.net`
-  (undo: `sudo rm /etc/resolver/ts.net`).
-- The admin credentials are valid for a year. A GitHub workflow opens an issue 45 days before they
-  expire; renew with `make creds` and commit `credential-expiry.yaml`.
+  run `make mac-dns` once: it sends only `ts.net` names to Tailscale's resolver and leaves all other
+  DNS unchanged (undo: `sudo rm /etc/resolver/ts.net`).
+- The admin credentials and the Cloudflare API token expire after a year. A GitHub workflow opens an
+  issue 45 days before; `credential-expiry.yaml` says how to renew each one.
 
 ## Public showcase
 
@@ -133,8 +133,8 @@ stays safe:
   To add someone: set it to `false`, push, let them sign up, then set it back to `true`.
 - The server sends no email: sign-up verification codes appear in museum's log
   (`kubectl -n ente logs deploy/ente-museum | grep -i "verification code"`).
-- New accounts get 10 GB. Raise it to 100 TB (what Ente's admin tool calls "no limit"):
-  `kubectl -n ente exec ente-postgres-0 -- psql -U pguser -d ente_db -c "update subscriptions set storage = 109951162777600 where product_id = 'free';"`
+- New accounts get 10 GB; an hourly job (`kubernetes/apps/ente/storage-limit.yaml`) raises every
+  account to 100 TB (what Ente's admin tool calls "no limit").
 - Apps: on the first screen tap the logo 7 times and set the server to
   `https://ente-api.junco-ulmer.ts.net`. The web apps on this server already use it.
 

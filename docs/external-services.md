@@ -49,6 +49,7 @@ token Secret in the cluster.
 
 ## GitHub
 
-- Repository `homelab` with the Flux deploy key (created by OpenTofu).
+- The repository's settings, the protection of `main`, vulnerability alerts and the Flux deploy key are
+  code (`tofu/github.tf`, `tofu/flux.tf`); OpenTofu uses the `gh` CLI login.
 - **Renovate**: the Mend Renovate app, plan "Renovate Only", mode "Scan and Alert", installed on
   this repository only.

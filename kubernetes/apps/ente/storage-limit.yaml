@@ -1,0 +1,46 @@
+# New Ente accounts get 10 GB. Every hour this raises any account below 100 TB (what Ente's admin
+# tool calls "no limit") to 100 TB, so nobody has to run SQL by hand after a sign-up.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ente-storage-limit
+  namespace: ente
+spec:
+  schedule: "17 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels: {app: ente-storage-limit}
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext: {runAsNonRoot: true, runAsUser: 70, runAsGroup: 70, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: psql
+              image: docker.io/library/postgres:15.20-alpine
+              command:
+                - psql
+                - --no-psqlrc
+                - -v
+                - ON_ERROR_STOP=1
+                - -c
+                - UPDATE subscriptions SET storage = 109951162777600 WHERE storage < 109951162777600;
+              env:
+                - {name: PGHOST, value: ente-postgres}
+                - {name: PGUSER, value: pguser}
+                - {name: PGDATABASE, value: ente_db}
+                - name: PGPASSWORD
+                  valueFrom: {secretKeyRef: {name: ente-secrets, key: POSTGRES_PASSWORD}}
+              resources:
+                requests: {cpu: 10m, memory: 16Mi}
+                limits: {memory: 64Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}

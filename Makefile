@@ -15,7 +15,7 @@ export GITHUB_TOKEN ?= $(shell gh auth token 2>/dev/null)
 
 ifndef HOMELAB_TOOLBOX
 
-.PHONY: toolbox shell $(TARGETS)
+.PHONY: toolbox shell mac-dns $(TARGETS)
 
 toolbox:
 	docker build -q -t $(IMAGE) .devcontainer >/dev/null
@@ -26,6 +26,13 @@ DOCKER_RUN = docker run --rm -i $(shell test -t 0 && echo -t) \
 	-v "$(AGE_KEY)":/root/.config/sops/age/keys.txt:ro \
 	-e GITHUB_TOKEN \
 	$(IMAGE)
+
+# On the admin Mac (not in the toolbox): send only *.ts.net lookups to Tailscale's resolver, leaving
+# the Mac's other DNS alone. Asks for your password (sudo). Undo: sudo rm /etc/resolver/ts.net
+mac-dns:
+	sudo mkdir -p /etc/resolver
+	echo "nameserver 100.100.100.100" | sudo tee /etc/resolver/ts.net >/dev/null
+	@echo "*.ts.net now resolves through Tailscale"
 
 shell: toolbox
 	@mkdir -p "$(CRED_DIR)" && chmod 700 "$(CRED_DIR)"

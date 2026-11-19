@@ -1,7 +1,7 @@
 # Default deny for Ente (enforced by Cilium), then only the paths Ente needs:
 #   Tailscale proxies -> museum :8080, web :3000/:3009, s3 :3200
 #   museum -> postgres :5432, museum -> ente-s3 Tailscale proxy :443 (same HTTPS name as phones)
-#   bucket job -> s3 :3200; everything -> cluster DNS
+#   bucket job -> s3 :3200; storage-limit job -> postgres :5432; everything -> cluster DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: default-deny, namespace: ente}
@@ -47,7 +47,9 @@ spec:
   podSelector: {matchLabels: {app: ente-postgres}}
   policyTypes: [Ingress]
   ingress:
-    - from: [{podSelector: {matchLabels: {app: ente-museum}}}]
+    - from:
+        - podSelector: {matchLabels: {app: ente-museum}}
+        - podSelector: {matchLabels: {app: ente-storage-limit}}
       ports: [{port: 5432}]
 ---
 apiVersion: networking.k8s.io/v1
@@ -87,3 +89,13 @@ spec:
   egress:
     - to: [{podSelector: {matchLabels: {app: ente-s3}}}]
       ports: [{port: 3200}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: storage-limit, namespace: ente}
+spec:
+  podSelector: {matchLabels: {app: ente-storage-limit}}
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to: [{podSelector: {matchLabels: {app: ente-postgres}}}]
+      ports: [{port: 5432}]
