@@ -46,6 +46,8 @@ spec:
             spec:
               accessModes: [ReadWriteOnce]
               resources: {requests: {storage: 10Gi}}
+        # Accepts OpenTelemetry metrics from Alloy (remote write).
+        enableRemoteWriteReceiver: true
         # Pick up monitors and rules from every namespace, not only this chart's.
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
@@ -108,9 +110,28 @@ spec:
       # SOPS secret. Reached at https://grafana.junco-ulmer.ts.net (ingress.yaml).
       additionalDataSources:
         - name: Loki
+          uid: loki
           type: loki
           url: http://loki.monitoring.svc:3100
           access: proxy
+          jsonData:
+            # A traceID in a log line links to the trace in Tempo.
+            derivedFields:
+              - name: TraceID
+                matcherRegex: '(?:trace_?id|traceID)[=:"]+(\w+)'
+                url: "$${__value.raw}"
+                datasourceUid: tempo
+        - name: Tempo
+          uid: tempo
+          type: tempo
+          url: http://tempo.monitoring.svc:3200
+          access: proxy
+          jsonData:
+            tracesToLogsV2:
+              datasourceUid: loki
+              filterByTraceID: true
+            serviceMap:
+              datasourceUid: prometheus
       admin:
         existingSecret: grafana-admin
         userKey: admin-user

@@ -1,0 +1,16 @@
+# Grafana dashboards as code: each JSON file becomes a ConfigMap labelled grafana_dashboard, which
+# Grafana's sidecar loads (and reloads on change). Edit the JSON here, not in Grafana.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+configMapGenerator:
+  - name: dashboard-homelab-overview
+    files: [homelab-overview.json]
+  - name: dashboard-logs
+    files: [logs.json]
+  - name: dashboard-traces
+    files: [traces.json]
