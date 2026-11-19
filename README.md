@@ -33,7 +33,7 @@ flowchart LR
 | Metrics | metrics-server (kubelet certificates verified) | `kubernetes/infrastructure/metrics-server`, `kubelet-cert-approver` |
 | Observability | Prometheus, Alertmanager (alerts to ntfy), Grafana with dashboards as code, Loki (logs), Tempo (traces), Alloy (log collector and OpenTelemetry collector) | `kubernetes/infrastructure/monitoring` |
 | Apps | Ente Photos and Locker (end-to-end encrypted), default-deny network policies | `kubernetes/apps/ente` |
-| Public showcase | A separate read-only Grafana with one public dashboard, behind a Cloudflare Tunnel | `kubernetes/apps/showcase` |
+| Public showcase | A separate read-only Grafana with one public dashboard, behind a Cloudflare Tunnel | `kubernetes/apps/showcase`, `kubernetes/apps/cloudflared`, `tofu/cloudflare.tf` |
 | Website checks | enjoydevops.io and andreibadescu.com probed every minute (blackbox exporter) | `kubernetes/apps/website-monitoring` |
 
 The homelab tailnet holds only the cluster's devices. People reach an app through Tailscale
@@ -119,12 +119,13 @@ stays safe:
 - **One public dashboard** (Grafana's shared dashboards) with fixed queries: visitors can't run their
   own queries or open anything else. The dashboard is JSON in the repository, and a sidecar publishes
   it with a fixed token after every start (Grafana keeps no state).
-- **An outbound-only Cloudflare Tunnel** (`homelab`): no ports open at home. Its routes
-  (`cloudflared-config.yaml`) only pass the dashboard, its API calls and Grafana's static files;
-  everything else, including the login page and the API, returns 404 at Cloudflare's edge.
-- **Network policies**: the connector only reaches Cloudflare and the showcase services; the public
-  Grafana only reaches Prometheus. Restricted Pod Security, no service account tokens, read-only root
-  filesystems, CPU and memory limits.
+- **An outbound-only Cloudflare Tunnel**, defined in OpenTofu (`tofu/cloudflare.tf`): no ports open at
+  home. Its routes only pass the dashboard, its API calls and Grafana's static files; everything else,
+  including the login page and the API, returns 404 at Cloudflare's edge. The edge also redirects the
+  bare address to the dashboard and blocks any IP sending more than 100 requests in 10 seconds.
+- **Network policies**: the connector (`kubernetes/apps/cloudflared`) only reaches Cloudflare and the
+  public Grafana; the public Grafana only reaches Prometheus. Restricted Pod Security, no service
+  account tokens, read-only root filesystems, CPU and memory limits.
 
 ## Ente accounts
 

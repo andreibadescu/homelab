@@ -1,44 +1,42 @@
-# External services (set up by hand)
+# External services
 
-Everything in the cluster is code. These accounts and settings live outside it and are set up once.
+Their configuration is code wherever an API allows it (`tofu/tailscale.tf`, `tofu/cloudflare.tf`).
+What is left here are the one-time steps no API covers: creating accounts and the credentials that
+OpenTofu and the cluster use.
 
 ## Tailscale (homelab tailnet)
 
-A tailnet of its own, created with a separate login, holding only the cluster's devices.
+A tailnet of its own, created with a separate login, holding only the cluster's devices. Code:
+`tofu/tailscale.tf` applies the access policy (`tofu/tailscale-policy.hujson`) and MagicDNS.
 
-1. **DNS**: MagicDNS on, then **Enable HTTPS** (certificates for `*.<tailnet>.ts.net`). Optionally
+1. **DNS → Enable HTTPS** (certificates for `*.<tailnet>.ts.net`; no API for this switch). Optionally
    rename the tailnet first (DNS → Rename tailnet); `kubernetes/` uses `junco-ulmer.ts.net`.
-2. **Access controls** (JSON editor), the whole policy:
-   ```json
-   {
-     "tagOwners": {
-       "tag:k8s-operator": ["autogroup:admin"],
-       "tag:k8s": ["tag:k8s-operator"]
-     },
-     "grants": [
-       {"src": ["autogroup:member", "autogroup:shared"], "dst": ["tag:k8s"], "ip": ["tcp:443"]}
-     ]
-   }
-   ```
-3. **Settings → Trust credentials → OAuth**, description `homelab-operator`, scopes **Services**,
-   **Devices → Core** and **Keys → Auth Keys** (read and write), tag `tag:k8s-operator` on each. Store
-   the client ID and secret as `kubernetes/infrastructure/tailscale/operator-oauth.sops.yaml`
-   (a Secret `operator-oauth` in namespace `tailscale` with keys `client_id` and `client_secret`).
-4. **Sharing**: Machines → app device → Share, to each person's own Tailscale account. They reach
+2. **Two OAuth clients** (Settings → Trust credentials → OAuth):
+   - `homelab-operator`, for the Tailscale operator in the cluster: scopes **Services**,
+     **Devices → Core** and **Keys → Auth Keys** (read and write), tag `tag:k8s-operator`. Stored as
+     `kubernetes/infrastructure/tailscale/operator-oauth.sops.yaml` (Secret `operator-oauth`, keys
+     `client_id` and `client_secret`).
+   - `homelab-opentofu`, for OpenTofu: scopes **Policy File** and **DNS** only (read and write).
+     Stored as `tailscale_oauth_client_id` and `tailscale_oauth_client_secret` in
+     `tofu/secrets.sops.yaml`.
+   Before the first `make apply`, paste the policy file into the access controls editor once, so the
+   operator's tags exist; afterwards OpenTofu keeps it in sync.
+3. **Sharing**: Machines → app device → Share, to each person's own Tailscale account. They reach
    that device and nothing else. Never share `homelab-operator`.
 
 ## Cloudflare (public showcase)
 
-The tunnel was created once with the `cloudflared` login for `andreibadescu.com`:
+The zone `andreibadescu.com` is on the Cloudflare account. Code: `tofu/cloudflare.tf` creates the
+tunnel and its routes, the DNS record, the rate limit, the redirect, and the connector's namespace and
+token Secret in the cluster.
 
-```bash
-cloudflared tunnel create --credentials-file homelab-tunnel.json homelab
-cloudflared tunnel route dns homelab homelab.andreibadescu.com
-```
-
-The credentials file went into `kubernetes/apps/showcase/cloudflared-credentials.sops.yaml` (key
-`credentials.json`) and was deleted. The tunnel ID (7f2e12dd-754d-4c6a-a378-02e7fc87bbe0) is in `cloudflared-config.yaml`. To rebuild on
-another account, create a new tunnel the same way and replace both.
+1. **API token** (My Profile → API Tokens → Create Token → Create Custom Token), name
+   `homelab-opentofu`:
+   - zone policy for `andreibadescu.com` (and `enjoydevops.io`, for later): **Zone Read**,
+     **DNS Edit**, **Zone WAF Edit**, **Single Redirect Edit**;
+   - account policy: **Cloudflare Tunnel Edit**;
+   - expiry one year; the date is in `credential-expiry.yaml`, which opens a reminder issue.
+2. Store it as `cloudflare_api_token` in `tofu/secrets.sops.yaml`.
 
 ## Alerts
 
