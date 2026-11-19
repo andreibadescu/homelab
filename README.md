@@ -30,7 +30,7 @@ flowchart LR
 | Storage | local-path volumes on the encrypted `data` volume (`/var/mnt/data`) | `kubernetes/infrastructure/local-path` |
 | Private access | Tailscale operator: apps get HTTPS names on the homelab tailnet (`*.junco-ulmer.ts.net`) | `kubernetes/infrastructure/tailscale` |
 | Metrics | metrics-server (kubelet certificates verified) | `kubernetes/infrastructure/metrics-server`, `kubelet-cert-approver` |
-| Monitoring | Prometheus, Alertmanager (alerts to ntfy), Grafana | `kubernetes/infrastructure/monitoring` |
+| Monitoring | Prometheus, Alertmanager (alerts to ntfy), Grafana, Loki + Alloy (logs, 7 days) | `kubernetes/infrastructure/monitoring` |
 | Apps | Ente Photos and Locker (end-to-end encrypted), default-deny network policies | `kubernetes/apps/ente` |
 | Website checks | enjoydevops.io and andreibadescu.com probed every minute (blackbox exporter) | `kubernetes/apps/website-monitoring` |
 
@@ -126,6 +126,8 @@ on GitHub). It is never written to disk.
   command). Grafana keeps no state: its dashboards and data source come from the chart.
 - **Prometheus** scrapes the API server, kubelets and containers, the node (node-exporter), Kubernetes
   objects and CoreDNS every 60 s and keeps 15 days (at most 8 GB) on the data volume.
+- **Logs**: Alloy sends every pod's logs and the Kubernetes events to Loki (7 days on the data
+  volume). In Grafana: Explore → Loki, for example `{namespace="ente"}`.
 - **Alerts**: warning and critical alerts go to a private **ntfy** topic. Install the ntfy app and
   subscribe to the topic in `kubernetes/infrastructure/monitoring/alertmanager-notify.sops.yaml` (it
   works like a password, so keep it private). Informational alerts stay in Grafana and Alertmanager.

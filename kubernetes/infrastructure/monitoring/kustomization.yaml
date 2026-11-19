@@ -6,5 +6,6 @@ resources:
   - alertmanager-notify.sops.yaml
   - release.yaml
   - blackbox.yaml
+  - logs.yaml
   - ingress.yaml
   - flux-alerts.yaml
