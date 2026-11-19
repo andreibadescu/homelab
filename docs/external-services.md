@@ -27,6 +27,19 @@ A tailnet of its own, created with a separate login, holding only the cluster's 
 4. **Sharing**: Machines → app device → Share, to each person's own Tailscale account. They reach
    that device and nothing else. Never share `homelab-operator`.
 
+## Cloudflare (public showcase)
+
+The tunnel was created once with the `cloudflared` login for `andreibadescu.com`:
+
+```bash
+cloudflared tunnel create --credentials-file homelab-tunnel.json homelab
+cloudflared tunnel route dns homelab homelab.andreibadescu.com
+```
+
+The credentials file went into `kubernetes/apps/showcase/cloudflared-credentials.sops.yaml` (key
+`credentials.json`) and was deleted. The tunnel ID (7f2e12dd-754d-4c6a-a378-02e7fc87bbe0) is in `cloudflared-config.yaml`. To rebuild on
+another account, create a new tunnel the same way and replace both.
+
 ## Alerts
 
 - **ntfy** (ntfy.sh, no account): the topic is in

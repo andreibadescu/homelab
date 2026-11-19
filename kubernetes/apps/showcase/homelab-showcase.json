@@ -23,7 +23,7 @@
         "x": 0,
         "y": 0,
         "w": 24,
-        "h": 3
+        "h": 2
       },
       "options": {
         "mode": "markdown",
@@ -40,7 +40,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -93,7 +93,7 @@
       },
       "gridPos": {
         "x": 4,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -154,7 +154,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -215,7 +215,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -276,7 +276,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -329,7 +329,7 @@
       },
       "gridPos": {
         "x": 20,
-        "y": 3,
+        "y": 2,
         "w": 4,
         "h": 4
       },
@@ -386,7 +386,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 6,
         "w": 8,
         "h": 5
       },
@@ -397,9 +397,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "probe_success{job=\"websites\",instance=~\"https://(andreibadescu.com|enjoydevops.io/healthz)\"}",
+          "expr": "label_replace(probe_success{job=\"websites\",instance=~\"https://(andreibadescu.com/|enjoydevops.io/healthz)\"}, \"site\", \"$1\", \"instance\", \"https://([^/]+).*\")",
           "instant": true,
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{site}}"
         }
       ],
       "fieldConfig": {
@@ -458,7 +458,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 7,
+        "y": 6,
         "w": 8,
         "h": 5
       },
@@ -469,9 +469,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * avg_over_time(probe_success{job=\"websites\",instance=~\"https://(andreibadescu.com|enjoydevops.io/healthz)\"}[7d])",
+          "expr": "label_replace(100 * avg_over_time(probe_success{job=\"websites\",instance=~\"https://(andreibadescu.com/|enjoydevops.io/healthz)\"}[7d]), \"site\", \"$1\", \"instance\", \"https://([^/]+).*\")",
           "instant": true,
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{site}}"
         }
       ],
       "fieldConfig": {
@@ -520,7 +520,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 7,
+        "y": 6,
         "w": 8,
         "h": 5
       },
@@ -531,9 +531,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(probe_ssl_earliest_cert_expiry{job=\"websites\",instance=~\"https://(andreibadescu.com|enjoydevops.io/healthz)\"} - time()) / 86400",
+          "expr": "label_replace((probe_ssl_earliest_cert_expiry{job=\"websites\",instance=~\"https://(andreibadescu.com/|enjoydevops.io/healthz)\"} - time()) / 86400, \"site\", \"$1\", \"instance\", \"https://([^/]+).*\")",
           "instant": true,
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{site}}"
         }
       ],
       "fieldConfig": {
@@ -582,7 +582,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 11,
         "w": 12,
         "h": 8
       },
@@ -593,8 +593,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "probe_duration_seconds{job=\"websites\",instance=~\"https://(andreibadescu.com|enjoydevops.io/healthz)\"}",
-          "legendFormat": "{{instance}}"
+          "expr": "label_replace(probe_duration_seconds{job=\"websites\",instance=~\"https://(andreibadescu.com/|enjoydevops.io/healthz)\"}, \"site\", \"$1\", \"instance\", \"https://([^/]+).*\")",
+          "legendFormat": "{{site}}"
         }
       ],
       "fieldConfig": {
@@ -627,7 +627,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 11,
         "w": 12,
         "h": 8
       },
@@ -681,7 +681,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 19,
         "w": 8,
         "h": 7
       },
@@ -726,7 +726,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 20,
+        "y": 19,
         "w": 8,
         "h": 7
       },
@@ -771,7 +771,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 20,
+        "y": 19,
         "w": 8,
         "h": 7
       },

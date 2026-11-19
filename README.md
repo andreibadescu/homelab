@@ -6,7 +6,8 @@
 
 A single-node Kubernetes cluster on a Dell Latitude 5550, running Talos Linux and managed entirely as
 code from this repository: OpenTofu builds and bootstraps the node, Flux deploys everything else from
-Git. Nothing is exposed to the internet; apps are reached over Tailscale.
+Git. Apps are reached over Tailscale; the only public part is a read-only status page:
+**[homelab.andreibadescu.com](https://homelab.andreibadescu.com)**.
 
 ```mermaid
 flowchart LR
@@ -32,6 +33,7 @@ flowchart LR
 | Metrics | metrics-server (kubelet certificates verified) | `kubernetes/infrastructure/metrics-server`, `kubelet-cert-approver` |
 | Observability | Prometheus, Alertmanager (alerts to ntfy), Grafana with dashboards as code, Loki (logs), Tempo (traces), Alloy (log collector and OpenTelemetry collector) | `kubernetes/infrastructure/monitoring` |
 | Apps | Ente Photos and Locker (end-to-end encrypted), default-deny network policies | `kubernetes/apps/ente` |
+| Public showcase | A separate read-only Grafana with one public dashboard, behind a Cloudflare Tunnel | `kubernetes/apps/showcase` |
 | Website checks | enjoydevops.io and andreibadescu.com probed every minute (blackbox exporter) | `kubernetes/apps/website-monitoring` |
 
 The homelab tailnet holds only the cluster's devices. People reach an app through Tailscale
@@ -106,6 +108,23 @@ on GitHub). It is never written to disk.
   (undo: `sudo rm /etc/resolver/ts.net`).
 - The admin credentials are valid for a year. A GitHub workflow opens an issue 45 days before they
   expire; renew with `make creds` and commit `credential-expiry.yaml`.
+
+## Public showcase
+
+[homelab.andreibadescu.com](https://homelab.andreibadescu.com) shows live, aggregate numbers only. How it
+stays safe:
+
+- **A separate Grafana** (`kubernetes/apps/showcase`) whose only data source is Prometheus: no logs, no
+  traces, no admin data. Login, sign-up, anonymous access, snapshots and plugin management are off.
+- **One public dashboard** (Grafana's shared dashboards) with fixed queries: visitors can't run their
+  own queries or open anything else. The dashboard is JSON in the repository, and a sidecar publishes
+  it with a fixed token after every start (Grafana keeps no state).
+- **An outbound-only Cloudflare Tunnel** (`homelab`): no ports open at home. Its routes
+  (`cloudflared-config.yaml`) only pass the dashboard, its API calls and Grafana's static files;
+  everything else, including the login page and the API, returns 404 at Cloudflare's edge.
+- **Network policies**: the connector only reaches Cloudflare and the showcase services; the public
+  Grafana only reaches Prometheus. Restricted Pod Security, no service account tokens, read-only root
+  filesystems, CPU and memory limits.
 
 ## Ente accounts
 
