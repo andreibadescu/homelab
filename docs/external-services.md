@@ -1,6 +1,7 @@
 # External services
 
-Their configuration is code wherever an API allows it (`tofu/tailscale.tf`, `tofu/cloudflare.tf`).
+Their configuration is code wherever an API allows it (`tofu/tailscale.tf`, `tofu/cloudflare.tf`,
+`tofu/github.tf`, `tofu/healthchecks.tf`).
 What is left here are the one-time steps no API covers: creating accounts and the credentials that
 OpenTofu and the cluster use.
 
@@ -43,9 +44,12 @@ token Secret in the cluster.
 - **ntfy** (ntfy.sh, no account): the topic is in
   `kubernetes/infrastructure/monitoring/alertmanager-notify.sops.yaml` (`ntfy-url`). Subscribe to it
   in the ntfy app. To rotate, write a new random topic there and resubscribe.
-- **healthchecks.io** (free): an ntfy integration (server `https://ntfy.sh`, same topic, "down"
-  priority high) and a check `homelab` (period 5 minutes, grace 10 minutes). Its ping URL is
-  `healthchecks-url` in the same SOPS file.
+- **healthchecks.io** (free): the check `homelab` is code (`tofu/healthchecks.tf`). By hand, once:
+  the account, an **ntfy** integration (server `https://ntfy.sh`, same topic, "down" priority high)
+  and an **email** integration (integrations have no API), and a read-write API key stored as
+  `healthchecks_api_key` in `tofu/secrets.sops.yaml`. If the check is ever recreated, copy its new
+  ping URL (`tofu show -json`, attribute `ping_url`) into `healthchecks-url` in
+  `alertmanager-notify.sops.yaml`; the URL works like a password, so it never goes into the code.
 
 ## GitHub
 

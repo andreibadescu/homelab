@@ -8,7 +8,7 @@ metadata:
 type: Opaque
 stringData:
     ntfy-url: ENC[AES256_GCM,data:FZIIxtbmOX+qV3Yth9nvzauPqofnuorq1BuZvWKGly+ZzXNKqoufawDP+n43TeNt0yNmXQnjsPOD6DLJ7AlSQYen+tp/nQ==,iv:QzRPuQt3Ji7BbbucD6C/DjjHe2JwrTtkTr51zbB246I=,tag:QtJn79zXeT1BN16zRulYdw==,type:str]
-    healthchecks-url: ENC[AES256_GCM,data:dxrUa4rIFYqGmbFQIxWLmjPQUzTzxPh0XWcmx9U1gklx+DvDCNaOdKAx604WbuOSQIAD1r7GfgU=,iv:TkDv43i+jecU0E7568V1/AoXjljz3jHOkG+8FgAGPgo=,tag:ajrHNzmyXYoCJgylmBUW0Q==,type:str]
+    healthchecks-url: ENC[AES256_GCM,data:2YXAXZxOGa3QS9i2WaxSAeCzPvkrDLHuGqMfjzW440+SOQtPpXmLFBPfRUCD+xF0jquM8gZ0PUc=,iv:GkqyCf+CUryBhFG9EtoplxYkyTkvNDqYi+IeXSXLlNQ=,tag:e5BAv3RaXcCZaZnZSczx0Q==,type:str]
 sops:
     age:
         - enc: |
@@ -30,6 +30,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-11-19T19:35:17Z"
-    mac: ENC[AES256_GCM,data:vFUD1v7FxNwkKuS/xVWZgxrQqAqcwbJegghQtqJe0XiKD+8T9vHc09ujcLLoHZvbel+RQVdRgXVFA8e2xMdzyFdpf0+abpZEJ/pccKmoBofztmygMp89pLaxFEm2sAVU4+4b4kigJrWGJT9onrOybUtJmJV9QxIWBiZwN5Rcm1k=,iv:v4fsKn9akXhE8HR9tLrXPbmSlVcpP7TQOpua7i3mPPQ=,tag:yedDsrremdPaVou3UKsMpA==,type:str]
+    lastmodified: "2026-11-19T23:58:53Z"
+    mac: ENC[AES256_GCM,data:pvSbPf4akiL+HdKJbk17Dvz4PXnQ9AG2Qaex8n6GOLP0pTCl/Q25uaCp7n9ExChnR67e+5ZLPXPfVZGMtffTVsMHem/+YNo+NcIEzRBIgCf7XoIaqoxFPKwVKpJBw+jRvAmSwnuQ5Bk5j7KAMtO4VBkjNLWc3WNX0MwK0DQvMWc=,iv:BBvN+KreHzj0Gbm7D+YXQ0sCvMqIK5FbpdGtRcfl+2M=,tag:DEbGZDGzDI1YtMJt1k4AdQ==,type:str]
     version: 3.13.3

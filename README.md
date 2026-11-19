@@ -161,9 +161,10 @@ stays safe:
 - **Websites**: enjoydevops.io (app and sign-in health endpoints) and andreibadescu.com are checked
   every minute from the homelab. `WebsiteDown` (critical) fires after 5 minutes of failures and
   `WebsiteCertificateExpiresSoon` (warning) 14 days before a certificate expires.
-- **Dead man's switch**: the always-firing `Watchdog` alert pings healthchecks.io (check `homelab`)
-  about every minute. If the pings stop for about 15 minutes (server, network or Alertmanager down),
-  healthchecks.io notifies the same ntfy topic. The ping URL is in the same SOPS file.
+- **Dead man's switch**: the always-firing `Watchdog` alert pings healthchecks.io about every minute
+  (check `homelab`, defined in `tofu/healthchecks.tf`). If the pings stop for about 15 minutes (server,
+  network or Alertmanager down), healthchecks.io alerts through ntfy and by email. The ping URL is in
+  the same SOPS file.
 
 ## Secrets
 
