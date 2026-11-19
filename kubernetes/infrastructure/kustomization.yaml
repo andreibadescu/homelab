@@ -6,3 +6,4 @@ resources:
   - kubelet-cert-approver
   - metrics-server
   - monitoring
+  - policies

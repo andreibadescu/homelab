@@ -1,0 +1,37 @@
+# Cluster-wide baseline for workloads: pods in every namespace except the platform's own may never
+# reach the home network (router, other devices), the node itself (Talos API, kubelet) or the
+# Kubernetes API, whatever their own network policies allow. Cilium deny rules win over allow rules,
+# so a project can't loosen this. Internet, cluster DNS and other pods are not affected here; each
+# namespace's own default-deny policies decide those.
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: baseline-workload-egress
+spec:
+  description: Workloads never reach the home network, the node or the Kubernetes API.
+  endpointSelector:
+    matchExpressions:
+      # Platform namespaces that need the node or the API (CoreDNS, Flux, Prometheus scraping the
+      # node, the Tailscale operator and proxies, storage, certificate approval).
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: NotIn
+        values:
+          - kube-system
+          - flux-system
+          - monitoring
+          - tailscale
+          - local-path-storage
+          - kubelet-serving-cert-approver
+          - cilium-secrets
+  # Only deny: this policy must not switch namespaces without their own policies to default-deny.
+  enableDefaultDeny:
+    egress: false
+    ingress: false
+  egressDeny:
+    - toEntities: [host, remote-node, kube-apiserver]
+    - toCIDRSet:
+        - cidr: 192.168.0.0/16
+        - cidr: 172.16.0.0/12
+        - cidr: 10.0.0.0/8
+        - cidr: 100.64.0.0/10
+        - cidr: 169.254.0.0/16
