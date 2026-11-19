@@ -16,7 +16,7 @@ locals {
   showcase_host = "homelab.andreibadescu.com"
   # Access token of the public dashboard: part of its public URL, not a secret. The publisher
   # sidecar in kubernetes/apps/showcase/grafana.yaml uses the same value.
-  showcase_token   = "1dc30d40eb9e56906a89c0dfa85afe13"
+  showcase_token   = "1dc30d40eb9e56906a89c0dfa85afe13" # gitleaks:allow (public URL, not a secret)
   showcase_grafana = "http://grafana-public.showcase.svc:80"
 }
 
