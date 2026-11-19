@@ -40,8 +40,6 @@ spec:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
       capabilities: {drop: [ALL]}
-    extraEmptyDirMounts:
-      - {name: tmp, mountPath: /tmp}
     # The CPU limit is deliberate: heavy public traffic can't starve the node.
     resources:
       requests: {cpu: 20m, memory: 128Mi}
