@@ -1,0 +1,152 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana-community
+  namespace: showcase
+spec:
+  interval: 1h
+  url: https://grafana-community.github.io/helm-charts
+---
+# A separate, stateless Grafana for the public: its only data source is Prometheus (no logs, no
+# traces), login and sign-up are off, and the only thing published is the "Homelab showcase"
+# dashboard as a public (shared) dashboard with fixed queries. The private Grafana is untouched.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-public
+  namespace: showcase
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: grafana
+      version: 14.5.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-community
+  values:
+    persistence: {enabled: false}
+    initChownData: {enabled: false}
+    testFramework: {enabled: false}
+    rbac: {create: false}
+    serviceAccount: {create: true, autoMount: false}
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 472
+      runAsGroup: 472
+      fsGroup: 472
+      seccompProfile: {type: RuntimeDefault}
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities: {drop: [ALL]}
+    extraEmptyDirMounts:
+      - {name: tmp, mountPath: /tmp}
+    # The CPU limit is deliberate: heavy public traffic can't starve the node.
+    resources:
+      requests: {cpu: 20m, memory: 128Mi}
+      limits: {cpu: 500m, memory: 384Mi}
+    admin:
+      existingSecret: grafana-public-admin
+      userKey: admin-user
+      passwordKey: admin-password
+    grafana.ini:
+      server:
+        root_url: https://homelab.andreibadescu.com
+        enable_gzip: true
+      auth:
+        disable_login_form: true
+        disable_signout_menu: true
+      auth.anonymous:
+        enabled: false
+        hide_version: true
+      # Only the publisher sidecar uses basic auth, over localhost; the API is not routed publicly.
+      auth.basic:
+        enabled: true
+      users:
+        allow_sign_up: false
+        allow_org_create: false
+      security:
+        disable_gravatar: true
+        cookie_secure: true
+        cookie_samesite: strict
+        strict_transport_security: true
+        x_content_type_options: true
+        x_xss_protection: true
+        content_security_policy: true
+      snapshots:
+        enabled: false
+        external_enabled: false
+      analytics:
+        reporting_enabled: false
+        check_for_updates: false
+        check_for_plugin_updates: false
+        feedback_links_enabled: false
+      plugins:
+        plugin_admin_enabled: false
+      news:
+        news_feed_enabled: false
+      unified_alerting:
+        enabled: false
+      public_dashboards:
+        enabled: true
+      log:
+        level: warn
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            uid: prometheus
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+            access: proxy
+            isDefault: true
+            editable: false
+            jsonData: {timeInterval: 60s}
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: showcase
+            type: file
+            disableDeletion: true
+            editable: false
+            options: {path: /var/lib/grafana/dashboards/showcase}
+    dashboardsConfigMaps:
+      showcase: showcase-dashboard
+    # Publishes the dashboard with a fixed access token (the public URL) and keeps it published:
+    # Grafana is stateless, so this re-creates it after every restart.
+    extraContainers: |
+      - name: publish-dashboard
+        image: docker.io/curlimages/curl:8.23.0
+        env:
+          - name: TOKEN
+            value: "1dc30d40eb9e56906a89c0dfa85afe13"
+          - name: GF_USER
+            valueFrom: {secretKeyRef: {name: grafana-public-admin, key: admin-user}}
+          - name: GF_PASSWORD
+            valueFrom: {secretKeyRef: {name: grafana-public-admin, key: admin-password}}
+        command:
+          - sh
+          - -c
+          - |
+            API=http://localhost:3000/api/dashboards/uid/homelab-showcase/public-dashboards
+            while true; do
+              if curl -sf http://localhost:3000/api/health >/dev/null; then
+                current=$(curl -s -u "$GF_USER:$GF_PASSWORD" "$API")
+                if ! echo "$current" | grep -q "\"accessToken\":\"$TOKEN\""; then
+                  curl -sf -u "$GF_USER:$GF_PASSWORD" -X POST -H "Content-Type: application/json" "$API" \
+                    -d "{\"isEnabled\":true,\"share\":\"public\",\"accessToken\":\"$TOKEN\",\"timeSelectionEnabled\":false,\"annotationsEnabled\":false}" \
+                    >/dev/null && echo "public dashboard published"
+                fi
+              fi
+              sleep 60
+            done
+        resources:
+          requests: {cpu: 5m, memory: 8Mi}
+          limits: {memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}

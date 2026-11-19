@@ -16,6 +16,8 @@ metadata:
 spec:
   interval: 30m
   timeout: 10m
+  dependsOn:
+    - name: kube-prometheus-stack
   chart:
     spec:
       chart: loki
@@ -59,6 +61,9 @@ spec:
     resultsCache: {enabled: false}
     lokiCanary: {enabled: false}
     test: {enabled: false}
+    # Prometheus scrapes Loki itself (log volume on the dashboards).
+    monitoring:
+      serviceMonitor: {enabled: true}
 ---
 # Alloy collects every pod's logs and the Kubernetes events through the API (no host access
 # needed on Talos) and sends them to Loki. It is also the OpenTelemetry collector: apps send OTLP to
@@ -72,6 +77,7 @@ metadata:
 spec:
   interval: 30m
   dependsOn:
+    - name: kube-prometheus-stack
     - name: loki
   chart:
     spec:
@@ -84,6 +90,7 @@ spec:
     controller:
       type: deployment
       replicas: 1
+    serviceMonitor: {enabled: true}
     alloy:
       extraPorts:
         - {name: otlp-grpc, port: 4317, targetPort: 4317, protocol: TCP}

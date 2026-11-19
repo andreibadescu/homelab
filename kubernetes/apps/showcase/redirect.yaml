@@ -1,0 +1,56 @@
+# https://homelab.andreibadescu.com/ forwards to the public dashboard (a static page, 8 MB of busybox).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: showcase-redirect
+  namespace: showcase
+data:
+  index.html: |
+    <!doctype html>
+    <meta charset="utf-8">
+    <title>Homelab</title>
+    <meta http-equiv="refresh" content="0; url=/public-dashboards/1dc30d40eb9e56906a89c0dfa85afe13">
+    <a href="/public-dashboards/1dc30d40eb9e56906a89c0dfa85afe13">Homelab dashboard</a>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: showcase-redirect
+  namespace: showcase
+spec:
+  selector: {app: showcase-redirect}
+  ports: [{name: http, port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: showcase-redirect
+  namespace: showcase
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: showcase-redirect}
+  template:
+    metadata:
+      labels: {app: showcase-redirect}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, runAsGroup: 65534, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: httpd
+          image: docker.io/library/busybox:1.38.0
+          command: [httpd, -f, -p, "8080", -h, /www]
+          readinessProbe:
+            tcpSocket: {port: 8080}
+          resources:
+            requests: {cpu: 5m, memory: 8Mi}
+            limits: {cpu: 100m, memory: 32Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: www, mountPath: /www, readOnly: true}
+      volumes:
+        - name: www
+          configMap: {name: showcase-redirect}

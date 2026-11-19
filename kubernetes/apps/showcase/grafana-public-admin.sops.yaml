@@ -1,0 +1,34 @@
+# Admin login of the public Grafana. Used only by the publisher sidecar over localhost (login is off).
+apiVersion: v1
+kind: Secret
+metadata:
+    name: grafana-public-admin
+    namespace: showcase
+type: Opaque
+stringData:
+    admin-user: ENC[AES256_GCM,data:NMahPEw=,iv:6MpyTQbIuMXgI82zjvII+iD6UftrKqBkJRfvVhfCf9Y=,tag:/XBKEl8bN7L4hRE83aMC0Q==,type:str]
+    admin-password: ENC[AES256_GCM,data:RIx8Sj+hSkyTnRMZVlcNFdEhAAq8abDzQGpMAX+MRuQWZ6VUazCVYA==,iv:Kkn0FCxrCJ6KW3hfzEbkUIe4V+PXfNGcQp3cH3AaVjU=,tag:YKwqYoQRtN0QTixT8ZUX+g==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBvOFRyNUVxNjFGVUthV28v
+            Mm5VU091c1NicHovbm83a1FiR0t1SERRdkIwCjJ4WXp6QXJNQUF6enVrNC9vOWlI
+            b2xGWGQvc1BpTlhhMmYvNVpMSVdIQVkKLS0tIHNmanQxTlFHUkxIS0dCbHZsOTF6
+            OVlGK3JWTFZiNDBFT1l1SUIvNnhHMXcKCBUmZT2k74nFlsgIIBApA99yu3OqCVur
+            xNQ+IUbJypfkr7dR7/MP5UUsxZFhyZ58j1b0A0o2HUW/aCIUYChkig==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBsbGJjc3dTVTkvb0swWFlJ
+            YlU0aVFZQmRrUTI1cGc1ajJMVHdjMGRvd2prClJiS2t0eFJneDFFb0FCR0xDUkpG
+            dFJhMFhFOXA2Lys2TWt3SDU4Lzc3SWMKLS0tIGV4dUE5M2VqS2V2T2loaXExTnJa
+            ai84Y1ZjS0JEK3F5bU5GZ29iMlZyRlkKPJ2ZjQY7IBuBnkGb0CSfLUgFZfTJk0ax
+            gy+QE9WcZe3P+emWt5HDWqZlNIymi35zXBq7bZ4KIPztaz5w9vkdrw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-19T22:51:48Z"
+    mac: ENC[AES256_GCM,data:Xj37ssVZaNt6clTbZrn5RjQ34AwAOiFoMQGCHvKdvfhZzxfuDwbPDpvvbUkmLMuYsA7lbrz/f8Zq+PWvNSy7bhSjJD8hDrTt+cnEkf9ptUouMdPOxN4Q2KHR9Ja7fR/2Qzfe9clWy0GP8voB731H+olFzoqCgq64snBofFS/Oss=,iv:aPoLrHPYu1sfaXMrKtuWyJ9jj639gu1JI3uHs0BkFkk=,tag:8aji4F7624WrfLvPWU3/Aw==,type:str]
+    version: 3.13.3

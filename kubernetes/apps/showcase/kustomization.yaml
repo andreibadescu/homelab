@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - cloudflared-credentials.sops.yaml
+  - grafana-public-admin.sops.yaml
+  - networkpolicies.yaml
+  - cloudflared.yaml
+  - redirect.yaml
+  - grafana.yaml
+configMapGenerator:
+  # The public dashboard, as code. Only aggregate panels from Prometheus; no names, IPs or log content.
+  - name: showcase-dashboard
+    namespace: showcase
+    files: [homelab-showcase.json]
+    options:
+      disableNameSuffixHash: true

@@ -1,0 +1,8 @@
+# Public showcase at https://homelab.andreibadescu.com: a separate, minimal Grafana that can only read
+# Prometheus, published through an outbound-only Cloudflare Tunnel. See README "Public showcase".
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: showcase
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
