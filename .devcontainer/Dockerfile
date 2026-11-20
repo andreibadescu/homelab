@@ -1,7 +1,7 @@
 FROM debian:trixie-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends age ca-certificates curl git make unzip jq less openssh-client shellcheck yamllint \
+ && apt-get install -y --no-install-recommends age bzip2 ca-certificates curl git make unzip jq less openssh-client shellcheck yamllint \
  && rm -rf /var/lib/apt/lists/*
 
 # renovate: datasource=github-releases depName=opentofu/opentofu
@@ -23,6 +23,8 @@ ARG KUBECONFORM_VERSION=0.8.0
 ARG ACTIONLINT_VERSION=1.7.12
 # renovate: datasource=github-releases depName=gitleaks/gitleaks
 ARG GITLEAKS_VERSION=8.30.1
+# renovate: datasource=github-releases depName=restic/restic
+ARG RESTIC_VERSION=0.19.1
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 WORKDIR /tmp/dl
@@ -65,6 +67,11 @@ RUN ARCH="$(dpkg --print-architecture)" \
  && curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" \
  && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz$" | sha256sum -c - \
  && tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" -C /usr/local/bin gitleaks \
+ \
+ \
+ && curl -fsSLO "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_${ARCH}.bz2" \
+ && curl -fsSL "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/SHA256SUMS" | grep " restic_${RESTIC_VERSION}_linux_${ARCH}.bz2$" | sha256sum -c - \
+ && bunzip2 -c "restic_${RESTIC_VERSION}_linux_${ARCH}.bz2" > /usr/local/bin/restic && chmod 755 /usr/local/bin/restic \
  \
  && rm -rf /tmp/dl
 

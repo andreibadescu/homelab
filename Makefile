@@ -7,7 +7,7 @@ CRED_DIR ?= $(HOME)/.homelab
 AGE_KEY  ?= $(HOME)/Library/Application Support/sops/age/keys.txt
 TOFU     := tofu -chdir=tofu
 
-TARGETS := init upgrade lock fmt validate check plan apply rebuild output creds check-talos-config sync-manifests
+TARGETS := init upgrade lock fmt validate check plan apply rebuild output creds check-talos-config sync-manifests restic
 
 # OpenTofu manages the Flux deploy key on GitHub with the gh CLI login, passed only
 # through the environment.
@@ -24,7 +24,7 @@ DOCKER_RUN = docker run --rm -i $(shell test -t 0 && echo -t) \
 	-v "$(CURDIR)":/workspace \
 	-v "$(CRED_DIR)":/root/.homelab \
 	-v "$(AGE_KEY)":/root/.config/sops/age/keys.txt:ro \
-	-e GITHUB_TOKEN \
+	-e GITHUB_TOKEN -e APP -e ARGS \
 	$(IMAGE)
 
 # On the admin Mac (not in the toolbox): send only *.ts.net lookups to Tailscale's resolver, leaving
@@ -66,6 +66,11 @@ validate:
 # CI runs the same target.
 check:
 	scripts/check.sh
+
+# restic against an app's backup repository; works without the cluster.
+# Example: make restic APP=ente ARGS="snapshots"
+restic:
+	scripts/restic.sh "$(APP)" $(ARGS)
 
 plan:
 	$(TOFU) plan

@@ -1,0 +1,39 @@
+# One-off job: restore Ente's object storage from the latest backup into its volume (docs/backups.md,
+# "Restoring Ente"). Run it only while Ente's storage (statefulset/ente-s3) is scaled to zero.
+# --delete removes files that are not in the snapshot, so the volume matches it exactly.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ente-restore-files
+  namespace: ente
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels: {app: ente-backup}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: restic
+          image: docker.io/restic/restic:0.19.1
+          args: [restore, latest, --host, ente, --tag, files, --target, /, --delete]
+          envFrom:
+            - secretRef: {name: ente-backup}
+          env:
+            - {name: RESTIC_CACHE_DIR, value: /tmp/cache}
+            - {name: TMPDIR, value: /tmp}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: s3-data, mountPath: /data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: s3-data
+          persistentVolumeClaim: {claimName: data-ente-s3-0}
+        - {name: tmp, emptyDir: {}}

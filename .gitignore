@@ -21,3 +21,5 @@ keys.txt
 
 # macOS
 .DS_Store
+# Local restores (make restic ... restore --target /workspace/restore)
+/restore/
