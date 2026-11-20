@@ -20,3 +20,6 @@ spec:
   eventSources:
     - {kind: GitRepository, name: "*"}
     - {kind: Kustomization, name: "*"}
+    # Projects (kubernetes/tenants): their Git source and sync live in their own namespace.
+    - {kind: GitRepository, name: "*", namespace: enjoydevops}
+    - {kind: Kustomization, name: "*", namespace: enjoydevops}

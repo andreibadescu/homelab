@@ -10,7 +10,9 @@ spec:
   timeout: 10m
   path: ./kubernetes/tenants
   prune: true
-  wait: true
+  # Don't wait for the projects' own objects to become healthy: one project's broken Git source must not
+  # block the fences of the others. Project failures alert on their own (flux-alerts.yaml).
+  wait: false
   dependsOn:
     - name: infrastructure
   sourceRef:
