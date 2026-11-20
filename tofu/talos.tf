@@ -1,6 +1,9 @@
 locals {
   cluster_endpoint = "https://${var.node_ip}:6443"
 
+  # Zot's Service in the cluster (fixed ClusterIP, kubernetes/infrastructure/registry/zot.yaml).
+  registry_address = "10.96.0.50:5000"
+
   # Disk layout on the system disk: EFI, META, STATE, EPHEMERAL (fixed size), then
   # the "data" user volume taking the rest. Every volume holding data is LUKS2
   # encrypted with a TPM key, which Talos only unseals on a Secure Boot verified boot.
@@ -28,6 +31,41 @@ locals {
       kind       = "KubeNodeConfig"
       nodeIP     = {}
       labels     = { "node-role.kubernetes.io/control-plane" = "" }
+    }),
+    # Container images come through the registry in the cluster (Zot, kubernetes/infrastructure/registry)
+    # at its fixed internal address. Private images (registry.homelab.internal) only exist there. Public
+    # registries are cached by it, and fall back to the internet if it is unavailable, so the cluster
+    # never depends on Zot running (Zot's own image included).
+    yamlencode({
+      apiVersion   = "v1alpha1"
+      kind         = "RegistryMirrorConfig"
+      name         = "registry.homelab.internal"
+      endpoints    = [{ url = "http://${local.registry_address}" }]
+      skipFallback = true
+    }),
+    yamlencode({
+      apiVersion = "v1alpha1"
+      kind       = "RegistryMirrorConfig"
+      name       = "docker.io"
+      endpoints  = [{ url = "http://${local.registry_address}/v2/docker.io", overridePath = true }]
+    }),
+    yamlencode({
+      apiVersion = "v1alpha1"
+      kind       = "RegistryMirrorConfig"
+      name       = "ghcr.io"
+      endpoints  = [{ url = "http://${local.registry_address}/v2/ghcr.io", overridePath = true }]
+    }),
+    yamlencode({
+      apiVersion = "v1alpha1"
+      kind       = "RegistryMirrorConfig"
+      name       = "quay.io"
+      endpoints  = [{ url = "http://${local.registry_address}/v2/quay.io", overridePath = true }]
+    }),
+    yamlencode({
+      apiVersion = "v1alpha1"
+      kind       = "RegistryMirrorConfig"
+      name       = "registry.k8s.io"
+      endpoints  = [{ url = "http://${local.registry_address}/v2/registry.k8s.io", overridePath = true }]
     }),
     # Replace the generated "auto: stable" hostname with a fixed one.
     yamlencode({
