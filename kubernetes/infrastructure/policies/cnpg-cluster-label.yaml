@@ -9,9 +9,9 @@ kind: ValidatingAdmissionPolicy
 metadata:
   name: cnpg-cluster-label
 spec:
-  # Trial: errors are ignored and violations only produce warnings, until the rule is verified; then
-  # Fail and Deny.
-  failurePolicy: Ignore
+  # Verified 2026-11-20: warns for the label set by anyone else (admin included) on pods, Deployments and
+  # CronJobs; silent for the operator and for pods from Kubernetes' controllers.
+  failurePolicy: Fail
   matchConstraints:
     resourceRules:
       - {apiGroups: [""], apiVersions: [v1], operations: [CREATE, UPDATE], resources: [pods]}
@@ -56,4 +56,4 @@ metadata:
   name: cnpg-cluster-label
 spec:
   policyName: cnpg-cluster-label
-  validationActions: [Warn]
+  validationActions: [Deny]
