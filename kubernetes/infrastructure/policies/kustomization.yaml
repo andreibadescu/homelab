@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - baseline.yaml
   - priorityclass.yaml
+  - cnpg-cluster-label.yaml

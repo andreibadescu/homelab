@@ -1,0 +1,19 @@
+# Incoming: only from cert-manager's own pods and Prometheus. The API server's webhook calls come from
+# the node, which Cilium always allows. Outgoing is limited by the cluster-wide baseline (no home
+# network or node; the Kubernetes API is allowed for this namespace).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-ingress, namespace: cert-manager}
+spec: {podSelector: {}, policyTypes: [Ingress]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: own-pods-and-prometheus, namespace: cert-manager}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{podSelector: {}}]
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: monitoring}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}

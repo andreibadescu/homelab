@@ -34,6 +34,13 @@ rules:
   - apiGroups: [kubevirt.io, subresources.kubevirt.io]
     resources: ["*"]
     verbs: ["*"]
+  # PostgreSQL through CloudNativePG, with point-in-time recovery to R2 (Barman Cloud plugin).
+  - apiGroups: [postgresql.cnpg.io]
+    resources: [clusters, backups, scheduledbackups, poolers, databases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [barmancloud.cnpg.io]
+    resources: [objectstores]
+    verbs: [get, list, watch, create, update, patch, delete]
 ---
 apiVersion: v1
 kind: ServiceAccount

@@ -1,0 +1,59 @@
+# The label cnpg.io/cluster exempts a pod from the cluster-wide "no Kubernetes API" rule
+# (baseline.yaml), because CloudNativePG's database pods manage themselves through the API. Projects
+# control their own pods' labels, so only the CloudNativePG operator may set it: on pods it creates
+# directly, and on Jobs (and other workloads) whose pods carry it. Pods and ReplicaSets created by
+# Kubernetes' controllers from such an already-checked parent are allowed. Changing an existing pod
+# without touching the label is always allowed (status, finalizers).
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: cnpg-cluster-label
+spec:
+  # Trial: errors are ignored and violations only produce warnings, until the rule is verified; then
+  # Fail and Deny.
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+      - {apiGroups: [""], apiVersions: [v1], operations: [CREATE, UPDATE], resources: [pods]}
+      - {apiGroups: [apps], apiVersions: [v1], operations: [CREATE, UPDATE], resources: [deployments, replicasets, statefulsets, daemonsets]}
+      - {apiGroups: [batch], apiVersions: [v1], operations: [CREATE, UPDATE], resources: [jobs, cronjobs]}
+  variables:
+    - name: labels
+      expression: >-
+        object.kind == 'Pod' ? object.metadata.?labels.orValue({}) :
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.metadata.?labels.orValue({}) :
+        object.spec.template.metadata.?labels.orValue({})
+    - name: oldLabels
+      expression: >-
+        request.operation != 'UPDATE' ? {} :
+        oldObject.kind == 'Pod' ? oldObject.metadata.?labels.orValue({}) :
+        oldObject.kind == 'CronJob' ? oldObject.spec.jobTemplate.spec.template.metadata.?labels.orValue({}) :
+        oldObject.spec.template.metadata.?labels.orValue({})
+    - name: unchanged
+      expression: >-
+        'cnpg.io/cluster' in variables.oldLabels &&
+        variables.oldLabels['cnpg.io/cluster'] == variables.labels['cnpg.io/cluster']
+    - name: byOperator
+      expression: request.userInfo.username == 'system:serviceaccount:cnpg-system:cnpg-cloudnative-pg'
+    - name: byController
+      expression: >-
+        (object.kind == 'Pod' && request.userInfo.username in [
+          'system:serviceaccount:kube-system:job-controller',
+          'system:serviceaccount:kube-system:replicaset-controller',
+          'system:serviceaccount:kube-system:statefulset-controller',
+          'system:serviceaccount:kube-system:daemon-set-controller']) ||
+        (object.kind == 'ReplicaSet' && request.userInfo.username == 'system:serviceaccount:kube-system:deployment-controller') ||
+        (object.kind == 'Job' && request.userInfo.username == 'system:serviceaccount:kube-system:cronjob-controller')
+  validations:
+    - expression: "!('cnpg.io/cluster' in variables.labels) || variables.unchanged || variables.byOperator || variables.byController"
+      message: >-
+        Only the CloudNativePG operator may set the label cnpg.io/cluster: it grants access to the
+        Kubernetes API (kubernetes/infrastructure/policies/baseline.yaml).
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: cnpg-cluster-label
+spec:
+  policyName: cnpg-cluster-label
+  validationActions: [Warn]

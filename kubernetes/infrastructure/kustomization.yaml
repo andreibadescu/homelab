@@ -9,3 +9,5 @@ resources:
   - policies
   - registry
   - kubevirt
+  - cert-manager
+  - cnpg
