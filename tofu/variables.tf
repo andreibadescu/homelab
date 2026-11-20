@@ -67,7 +67,7 @@ variable "flux_version" {
   description = "Flux release installed in the cluster."
   type        = string
   # renovate: datasource=github-releases depName=fluxcd/flux2
-  default = "v2.10.0"
+  default = "v2.10.1"
 }
 
 variable "cilium_version" {
