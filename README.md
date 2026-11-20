@@ -65,6 +65,9 @@ The homelab tailnet holds only the cluster's devices. People reach an app throug
 
 ## CI/CD
 
+How a change gets in: [docs/workflow.md](docs/workflow.md) (branch, `make check`, pull request, squash
+merge once CI passes; rules for people and agents in [AGENTS.md](AGENTS.md)).
+
 - **CI** ([.github/workflows/ci.yaml](.github/workflows/ci.yaml)) runs `make check` on every pull
   request and push, inside the toolbox: OpenTofu format and validation, every Kubernetes manifest
   rendered and validated against schemas (including CRDs), a check that every Secret is
@@ -92,6 +95,7 @@ works as a VS Code / Windsurf Dev Container.
 | `make sync-manifests` | Push Talos's built-in manifests (Cilium, CoreDNS) to the cluster: dry run first, then asks |
 | `make check-talos-config` | Validate the rendered machine config with `talosctl validate` |
 | `make check` | Every repository check, exactly as CI runs them |
+| `make hooks` | Once per clone: run `make check` automatically before every push |
 | `make fmt` / `make validate` | Format and validate the OpenTofu code |
 | `make upgrade`, then `make lock` | Move providers to new versions and record hashes for all platforms |
 | `make restic APP=<app> ARGS="..."` | restic against an app's backup repository, without the cluster ([docs/backups.md](docs/backups.md)) |
