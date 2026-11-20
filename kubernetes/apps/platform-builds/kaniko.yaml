@@ -48,7 +48,7 @@ spec:
               echo "$CRANE_SHA256  $W/crane.tgz" | sha256sum -c -
               tar -xzf $W/crane.tgz -C $W crane
               REF=zot.registry.svc.cluster.local:5000/platform/kaniko:$KANIKO_VERSION
-              $W/crane append --insecure --platform linux/amd64 -f $W/layer.tar -t $REF
+              $W/crane append --insecure --oci-empty-base --platform linux/amd64 -f $W/layer.tar -t $REF
               $W/crane mutate --insecure $REF -t $REF --entrypoint /kaniko/executor --workdir /workspace \
                 --env HOME=/root --env USER=root --env PATH=/usr/local/bin:/kaniko \
                 --env SSL_CERT_DIR=/kaniko/ssl/certs --env DOCKER_CONFIG=/kaniko/.docker/
