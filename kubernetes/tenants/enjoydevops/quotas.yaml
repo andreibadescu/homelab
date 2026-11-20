@@ -1,10 +1,17 @@
 # Sizes from the EnjoyDevOps answers (2026-11-20). LimitRanges give defaults to containers without
-# their own requests or limits.
+# their own requests or limits. Scratch volumes (local-path-scratch, deleted with their claim) are only
+# allowed in the builds namespace.
 apiVersion: v1
 kind: ResourceQuota
 metadata: {name: enjoydevops, namespace: enjoydevops}
 spec:
-  hard: {requests.cpu: "1", requests.memory: 2Gi, limits.memory: 4Gi, requests.storage: 20Gi, pods: "15"}
+  hard:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.memory: 4Gi
+    requests.storage: 20Gi
+    pods: "15"
+    local-path-scratch.storageclass.storage.k8s.io/persistentvolumeclaims: "0"
 ---
 apiVersion: v1
 kind: LimitRange
@@ -19,7 +26,12 @@ apiVersion: v1
 kind: ResourceQuota
 metadata: {name: edo-lab, namespace: edo-lab}
 spec:
-  hard: {requests.cpu: 200m, requests.memory: 256Mi, limits.memory: 512Mi, pods: "3"}
+  hard:
+    requests.cpu: 200m
+    requests.memory: 256Mi
+    limits.memory: 512Mi
+    pods: "3"
+    local-path-scratch.storageclass.storage.k8s.io/persistentvolumeclaims: "0"
 ---
 apiVersion: v1
 kind: LimitRange
@@ -35,14 +47,25 @@ apiVersion: v1
 kind: ResourceQuota
 metadata: {name: edo-labs, namespace: edo-labs}
 spec:
-  hard: {requests.memory: 16Gi, requests.cpu: "4", pods: "12", secrets: "20"}
+  hard:
+    requests.memory: 16Gi
+    requests.cpu: "4"
+    pods: "12"
+    secrets: "20"
+    local-path-scratch.storageclass.storage.k8s.io/persistentvolumeclaims: "0"
 ---
-# Builds: low priority (PriorityClass builds) and capped, so they never starve the live apps.
+# Builds: low priority (PriorityClass builds) and capped (6 GiB of memory), so they never starve the
+# live apps or the learners' labs.
 apiVersion: v1
 kind: ResourceQuota
 metadata: {name: enjoydevops-builds, namespace: enjoydevops-builds}
 spec:
-  hard: {limits.cpu: "4", limits.memory: 8Gi, requests.storage: 30Gi, pods: "4", requests.devices.kubevirt.io/kvm: "1"}
+  hard:
+    limits.cpu: "4"
+    limits.memory: 6Gi
+    requests.storage: 30Gi
+    pods: "4"
+    requests.devices.kubevirt.io/kvm: "1"
 ---
 apiVersion: v1
 kind: LimitRange
