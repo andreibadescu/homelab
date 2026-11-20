@@ -185,10 +185,16 @@ stays safe:
   volume. The disks can't be read on other hardware without that passphrase.
 - **Admin access**: the Talos API (50000) and the Kubernetes API (6443) are reachable on the home
   network and require the client certificates in `~/.homelab`.
-- **Apps**: reachable only through Tailscale, never from the internet. Ente's namespace denies all
-  traffic except the paths it needs (Cilium enforces it).
-- **No inbound ports** are opened on the router. Public apps will leave through outbound-only
-  Cloudflare Tunnels.
+- **Apps**: reachable only through Tailscale. The one public page (the showcase) is published
+  through an outbound-only Cloudflare Tunnel; no inbound ports are opened on the router.
+- **Network policies** (enforced by Cilium), in three layers:
+  - cluster-wide (`kubernetes/infrastructure/policies`): pods outside the platform's own namespaces
+    can never reach the home network, the node or the Kubernetes API, whatever else they allow;
+  - every app namespace (Ente, showcase, cloudflared) denies all traffic except the paths it needs;
+  - the platform namespaces (monitoring, tailscale, storage, certificate approver) deny incoming
+    traffic except what each component needs, so no pod can read Loki's logs or silence
+    Alertmanager. Flux ships its own policies; kube-system stays open because CoreDNS and Cilium
+    serve every pod.
 
 ## Adapting this to your own hardware
 
