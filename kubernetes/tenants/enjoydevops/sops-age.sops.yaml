@@ -1,0 +1,34 @@
+# EnjoyDevOps tenant key: Flux decrypts the *.sops.yaml files in the EnjoyDevOps repo with it.
+# Public key (give to the app; recipient in its .sops.yaml): age1dcjvtfv2lef4rflmpgglzd0c5rd04nen8spp4g0xdz70qyg5fp3sj60n47
+apiVersion: v1
+kind: Secret
+metadata:
+    name: sops-age
+    namespace: enjoydevops
+type: Opaque
+stringData:
+    age.agekey: ENC[AES256_GCM,data:5rDTKU9OHiVrFEWo3dEtz0hbFcbmGBPwRixEJREg4qlIG0UGq/W8gV5LkwE+0IxAiphPE0ltFF9FFio/tCG4DbnaNCSvwn2LHQm0TLJ91gHLHRIFgh39VT8vXiNfOmdpbHwdXXlUg2VXSO43duWVpNP0mlx9WVc7QLDDLJXWNCDsK4pL6QYP8mnbIEJwRUFDxVBusK4NQWohLZakqBok7o9GZzYt+qRJc8cWcIv5Yy6EAaHM9EI8dg==,iv:2/vnU1ksly049WA1A02SnWBWae91GZForz8HS8OeWcA=,tag:vN6f8fcbbgx3M8NIsJ/QvA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBtSys4TldKcklpczVDY0hE
+            QVBVOVBRMFpTbk5MZjdybWJjYTVDZC9nTmhjCk1OM2VWdk03dXVIaHZVWGhiUmx6
+            aXpMZnppWk9xemdzQVNEeS9ieTIvRHcKLS0tIHRFYm9tTXh0azV1dE9jRVRVZW4z
+            NXhkdTJBOEZEbTR3RUtaa3NyNSs2VkEKIgHIXz7xIdHGDjegQLcOoXITfer3S2e2
+            19NWdTUACqNRIg1RQTk8h8wRmYs9k4nU5dIWXG/PcvIBmQHuUdDRGQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBuMDV3dGxuYk1xUnh3QlE0
+            VElXZ0UzbTlwK0tGVUlKcFM3NGtWUzRMTEZzCkg3RUo5NHFteU90NHMwSDJWVk1E
+            NE5mQzhIZE9LU3RieURXR2wwMlhwRmsKLS0tIHhPVnRWVTZ4dnQwd1NFc3BXNzky
+            K0hJVWduUm9leUxzVTJtcjhDaUJJdTgKgABY8gZOW7VcRI5lFP2XjwgdEZunB+0D
+            gMFSujTpsPirjMToelV6SmVtu3a4m+G/huZqf/lGKCAoUd2QZqmu6w==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-20T14:23:36Z"
+    mac: ENC[AES256_GCM,data:kDaDInLsgqVxVoDKYny3k1S2eBHGixj76ogArzqebHqsrdzyQh8vjL1lAjQg2JxUG4olwGBAY2TfL+fJQbzO+HW0zb2Y2H0keXUMa5aoR0JoD+hsjy+1kZQTUYhTXbSje00Jt7e3v9HhHHhcBeNtCxKwzpbQW8QKZ/UElRoaUyQ=,iv:+gRJRLKp4yHc7H1uwgluomXGvVXdFXMgRpc2vJItLl0=,tag:lFJ52dv9OHkN+BYz6xokDQ==,type:str]
+    version: 3.13.3

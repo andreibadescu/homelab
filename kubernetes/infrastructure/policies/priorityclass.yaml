@@ -1,0 +1,9 @@
+# Image builds run below everything else and never evict running pods, so they can't slow the apps.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: builds
+value: -100
+preemptionPolicy: Never
+globalDefault: false
+description: Image builds; lowest priority, never preempts.

@@ -8,7 +8,7 @@ kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: baseline-workload-egress
 spec:
-  description: Workloads never reach the home network, the node or the Kubernetes API.
+  description: Workloads never reach the home network or the node.
   endpointSelector:
     matchExpressions:
       # Platform namespaces that need the node or the API (CoreDNS, Flux, Prometheus scraping the
@@ -29,10 +29,38 @@ spec:
     egress: false
     ingress: false
   egressDeny:
-    - toEntities: [host, remote-node, kube-apiserver]
+    - toEntities: [host, remote-node]
     - toCIDRSet:
         - cidr: 192.168.0.0/16
         - cidr: 172.16.0.0/12
         - cidr: 10.0.0.0/8
         - cidr: 100.64.0.0/10
         - cidr: 169.254.0.0/16
+---
+# Kubernetes API: denied to workloads like the above, except edo-lab (EnjoyDevOps's lab controller).
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: baseline-workload-api
+spec:
+  description: Workloads never reach the Kubernetes API (edo-lab excepted).
+  endpointSelector:
+    matchExpressions:
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: NotIn
+        values:
+          - kube-system
+          - flux-system
+          - monitoring
+          - tailscale
+          - local-path-storage
+          - kubelet-serving-cert-approver
+          - cilium-secrets
+          - kubevirt
+          # Creates the learner VMs through the Kubernetes API.
+          - edo-lab
+  enableDefaultDeny:
+    egress: false
+    ingress: false
+  egressDeny:
+    - toEntities: [kube-apiserver]

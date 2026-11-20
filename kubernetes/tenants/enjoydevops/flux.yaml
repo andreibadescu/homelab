@@ -1,0 +1,26 @@
+# Flux applies ./deploy/k8s from the EnjoyDevOps repository (read-only deploy key) as flux-enjoydevops,
+# decrypting its secrets with the tenant key. Suspended until the app re-encrypts its secrets for that
+# key; resume with `suspend: false` here.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata: {name: enjoydevops, namespace: enjoydevops}
+spec:
+  interval: 1m
+  url: ssh://git@github.com/andreibadescu/enjoydevops.git
+  ref: {branch: main}
+  secretRef: {name: enjoydevops-git}
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata: {name: enjoydevops, namespace: enjoydevops}
+spec:
+  suspend: true
+  interval: 10m
+  timeout: 5m
+  sourceRef: {kind: GitRepository, name: enjoydevops}
+  path: ./deploy/k8s
+  prune: true
+  serviceAccountName: flux-enjoydevops
+  decryption:
+    provider: sops
+    secretRef: {name: sops-age}

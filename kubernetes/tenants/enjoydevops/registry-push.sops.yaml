@@ -1,0 +1,33 @@
+# Push login for Zot (user enjoydevops-builder, limited to enjoydevops/**), used by build pods.
+apiVersion: v1
+kind: Secret
+metadata:
+    name: registry-push
+    namespace: enjoydevops-builds
+type: kubernetes.io/dockerconfigjson
+stringData:
+    .dockerconfigjson: ENC[AES256_GCM,data:RYI0L72lJ5s21mri2SKEMcAkLVsZLRpMHocFGhvG6jKSnlMSqdx6eUbGKun9WKfw5FFqDflDPD10ZBnP6SLIJUlqEU3YT1KjaBfHb8aUvVk2dKPh/r9ksipq0NnXIiJwbxO7F/Em0yT7DUkjNy7azGnTlmbSX8jUi+z2JfOB0Wiy9hVGigq7cUsU0Ig1,iv:TaEaIUWnG4dtxKOPdZ/eq8oBFK2Oz3Lej8UY8qqEzoE=,tag:xhMFAOj8ScO/S0ai7VDdzg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAxSEtnUWlyVlQwUElpcHEy
+            azdFTTVRb3ZxQ0ZhYmlkZmpMZWR2Ukc5b3hRCkVIYVpDbGh2MmRBaEMyZnA1K2w2
+            MlFveG55R0o0U3NWVlZ0eWh5S3R5c2sKLS0tIFl5ME01dlpZbUdJTWpkeGR5Tnhw
+            ekFOYy9YUDMxblJmZlNpSlMxcnpMQVkKRO5qRD3XH8CKbB4j+/aaJ204fnT+QGJ9
+            Vi09nwByz4oq7UQ7h03sWjUfkpc86P6nDmaw+8k9/5yKtyjX/nwqig==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBXQTBBSXE5ekxVRmxVV0Yv
+            RG95d1BzNllHWEhlelQvZFRROTVSa1lOQ1dvCld6NlB1NS9TYWJwZWRESU1PdWlL
+            SUFVODZDWGE0VG52WGJZekV2U3htYmsKLS0tIDNaZllqTXVWVE5KQXZtdjRVNVMw
+            Tk9SNUtobGkraTFnN0V3RGtWNzdQZ2sKz4GBDKNiBrHVmloE7tgZtAvsKK8LuOtx
+            VECpbMBY/MqwUTeHneQvxfFzdwdVo9sGWEkCTQtKljvV07ajguK28A==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-20T14:23:37Z"
+    mac: ENC[AES256_GCM,data:0zZaAJGXchVE0u00AtSJrndj5jacCAcbYhbTGnjzUPSA6EMWa53W0ynnr+JgKtGSFyA7Uyjqtzu7/ixIcbdf2gavsGs2CtOksExubIXgnjsx/++uwed8dUMq1gS70C/h/Q11g4YvGvyJjnsflm1G1PlxIikPhvHEmSdTPS29hyw=,iv:2q9laAAYtxEa0aCHdAyErHRsq/q+kkN/L3hSNPzr/Kg=,tag:bD2E3HHHc7DbpjLcWAqPQg==,type:str]
+    version: 3.13.3

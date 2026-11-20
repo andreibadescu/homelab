@@ -1,0 +1,35 @@
+# Read-only deploy key of github.com/andreibadescu/enjoydevops for Flux (public half: tofu/tenants.tf).
+apiVersion: v1
+kind: Secret
+metadata:
+    name: enjoydevops-git
+    namespace: enjoydevops
+type: Opaque
+stringData:
+    identity: ENC[AES256_GCM,data:YrPjcQtpG3WkXSOgtmxUJOC3xhoFO+kmq0nAq/9MDALOtBwNdIUuxiHtO2eRXQmDyOQ7WbfzG1EaEuHBOicb1hcfy0jCaMHsaj/apSA9PO9MZDCxYn8YUGxGrNiS9ddRrbrwZ8dQJKgvU9UvJmiUp3+CG1TLPGFjFDrRu84Y5YPLVgKhd3TT1KY4czSMvMFKyNkjKQw484lzGiUAb/t4bIrY6wCBGmJBA/M5CdZtPx1KMGZom/wwy/KTTDDIFuzhyYBzKydJBDzuh7FmD4scZ3GzzZS1x0hjOZeMsPn789Kea6uDFWPjEkeN9z7LasMZyJxjRMrn00DhPDupYYqZkpASjYl5p/CE2qFSuD5AZPfYMapKajn8gV98i6SHfdPOFHUgXvKJAAn82jhmCh/Zmnnhpdlf9hq+0dXyVOrP8ZTpLhQgsv10MQxOSw4FtOB+bfxj0zKdDVu2LxOBEi8DWR1dcgxNR0bVwocKnkqWaLHESvJMImoHKgNf/SxE/1cqJ8nFjfGv8/GjQNJAUz1bQJi+Tug1oCXgp/2o,iv:H+fQd2ksgsKHkqJrodxnScWWSZAADHIkYw4hM7dIQKY=,tag:B4xxPHWAuPCwY3DOfgKZzw==,type:str]
+    identity.pub: ENC[AES256_GCM,data:sE4oVDKWOfWH1kW0+GG4q4ofLO+rcW5BtiXBQjLB20mnZ/VeAHEQokAN3GztIFtgdkQv5bB5q6mSyf+euDCd7ivrB2p0yCXGYwGiX1f2bfvFfo9uALvmW2ZM8bRlEyNeXA==,iv:xO7PjeC8yvwr6xnJ54bUWI3OFoFnyrmT8IbmxtoZ1CI=,tag:4OVhVsnMoX5ur/Nd5ltOyQ==,type:str]
+    known_hosts: ENC[AES256_GCM,data:OXcQriKkWgbtZIa4pisUN+7UkyJ72bDyr5nZmBt8kg4g0RpWzwlcetn4CWtukrvUbKXryba9aQmpIQl604hE8Ci/7Srb6h3boKrCs9VR10nkO1hASa0q3cCCa/tBRWH6v3Vn15xy4hkxHA1WyD4LvfgOzKL2M76/VyVQIA==,iv:3P8hRcyZBCDjM1Fkv1Ctf+FgTq1Eoc2K51Jg/0x2X78=,tag:ZnhvR9n5lnSkSP4oZTNVrA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBsS2puYTV5dU1iNDFiMEg1
+            R1ZkOXJxQkZidDdtZTc5YlpER3JaMHVwcG5zCis1RXpMT2g4ZExaRFEwMktIM3lF
+            QWFhRWhGOGZGa3lZaGozNTROREJ2TlkKLS0tIFZMWW51Q2ZjQldiNUZIQmROTkhS
+            MWRpUXp0N3pMOWx3TUpqRDJhT1JTT0EKhu1ndw606LAQMx+s5rOir1tSxvs0njvE
+            YzOwnRilLGZiTo/kwgNXJeYLNCbKpM0F+mMHa3fOxCf9rnwKft/3+g==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6ZUNFSkNhZ0ovWGVjd3p6
+            ZFpDT0paVGMzekc1d2xhZlJ3WnBPemVmU2s0Cm45dVhxSDVVS0hmRURrMGhhSG05
+            ZkhpZFJDSEw4eS91cHFnc0Rvd2dhRnMKLS0tIEo0dDg0aEd6WnJNZCt0Q3lQSWZa
+            Mkx6L0Qrcmg0TGhYOSsyVFBTL3BESXcKH4qrAQv9WybHUN+5m695ahP6p1IUbWTZ
+            llDi+QyLOleupCJuQ7PjPbWwm/+YpVH4e/u4T4HU024CnYDxtKZBOw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-20T14:23:37Z"
+    mac: ENC[AES256_GCM,data:PisMvsQAlbAelKOIstxUeVIeJESkHiYqK7YCakiq68BcvEDs7gZzoA3vOJEu79wfv37YJqp+iEUQ5q3F1xILivVZy44D5ViJS72gLT4GC9NSgs5ctYGW9XcYpJSTb/DU8ZwCKx0ms+YoKF9txVkt+pnjmJVTD2PumXfvSfPUBaI=,iv:5LifR6lNRnHEIll7wXJ0Jxiu/9y79qkCuOss09u1V+U=,tag:pgYMXXljxVV7/Wi1Qikdig==,type:str]
+    version: 3.13.3

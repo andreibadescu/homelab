@@ -34,7 +34,12 @@ failed=0
 while IFS= read -r file; do
   case "$file" in
     *.sops.yaml) ;;
-    *) echo "plaintext Secret outside a *.sops.yaml file: $file"; failed=1 ;;
+    *)
+      # Allowed: service-account-token Secrets with no data (Kubernetes fills them in).
+      if grep -q '^type: kubernetes.io/service-account-token$' "$file" && ! grep -q -E '^(data|stringData):' "$file"; then
+        continue
+      fi
+      echo "plaintext Secret outside a *.sops.yaml file: $file"; failed=1 ;;
   esac
 done < <(grep -rl --include='*.yaml' -E '^kind: Secret$' kubernetes || true)
 while IFS= read -r file; do
