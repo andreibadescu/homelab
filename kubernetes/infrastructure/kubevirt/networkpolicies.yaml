@@ -1,0 +1,20 @@
+# Incoming traffic to KubeVirt's components: only from each other and from Prometheus. The API server's
+# webhook calls come from the node, which Cilium always allows. VMs live in their projects' namespaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-ingress, namespace: kubevirt}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: kubevirt-components, namespace: kubevirt}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{podSelector: {}}]
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: monitoring}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}

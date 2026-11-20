@@ -12,7 +12,7 @@ spec:
   endpointSelector:
     matchExpressions:
       # Platform namespaces that need the node or the API (CoreDNS, Flux, Prometheus scraping the
-      # node, the Tailscale operator and proxies, storage, certificate approval).
+      # node, the Tailscale operator and proxies, storage, certificate approval, KubeVirt).
       - key: k8s:io.kubernetes.pod.namespace
         operator: NotIn
         values:
@@ -23,6 +23,7 @@ spec:
           - local-path-storage
           - kubelet-serving-cert-approver
           - cilium-secrets
+          - kubevirt
   # Only deny: this policy must not switch namespaces without their own policies to default-deny.
   enableDefaultDeny:
     egress: false
