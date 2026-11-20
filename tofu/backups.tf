@@ -39,10 +39,10 @@ resource "cloudflare_r2_bucket_lifecycle" "backups" {
 }
 
 # EnjoyDevOps's original bucket (default jurisdiction), created by the EnjoyDevOps project before it was
-# code. Its backups move to the EU bucket enjoydevops-backups above (backup_apps); this one keeps only
-# the Mac's age-encrypted dumps (edo/, kratos/, expiring after 30 days) and the backups written before
-# the move, and is retired once the Mac is switched off. restic/ and pitr/ must never be touched by a
-# bucket rule while they are in use: deleting old restic files would break every snapshot.
+# code. Retired: EnjoyDevOps runs in the cluster since 2026-11-21 and its backups go to the EU bucket
+# above (backup_apps). Everything left here predates the cutover (the Mac's old dumps and the first
+# point-in-time archive), so a rule empties the bucket; once it's empty, this resource is removed and
+# OpenTofu deletes the bucket.
 resource "cloudflare_r2_bucket" "enjoydevops_backups" {
   account_id = local.cf_account_id
   name       = "enjoydevops-backups"
@@ -61,18 +61,18 @@ resource "cloudflare_r2_bucket_lifecycle" "enjoydevops_backups" {
   account_id  = local.cf_account_id
   bucket_name = cloudflare_r2_bucket.enjoydevops_backups.name
   # Cloudflare returns rules sorted by id; listing them the same way keeps plans clean.
-  rules = concat(
-    [{
+  rules = [
+    {
       id                                 = "abort-unfinished-uploads"
       enabled                            = true
       conditions                         = { prefix = "" }
       abort_multipart_uploads_transition = { condition = { type = "Age", max_age = 86400 } }
-    }],
-    [for prefix in ["edo/", "kratos/"] : {
-      id                        = "expire-${trimsuffix(prefix, "/")}-after-30-days"
+    },
+    {
+      id                        = "retire-everything-after-1-day"
       enabled                   = true
-      conditions                = { prefix = prefix }
-      delete_objects_transition = { condition = { type = "Age", max_age = 2592000 } }
-    }]
-  )
+      conditions                = { prefix = "" }
+      delete_objects_transition = { condition = { type = "Age", max_age = 86400 } }
+    },
+  ]
 }
