@@ -1,0 +1,11 @@
+# Scratch volumes for build jobs: deleted together with their claim (reclaimPolicy Delete), on the data
+# volume rather than /var. No pathPattern, so every volume gets a fresh, uniquely named folder and old
+# data can never reappear. Never for data worth keeping: project quotas allow it only in build
+# namespaces (docs/builds.md).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path-scratch
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
