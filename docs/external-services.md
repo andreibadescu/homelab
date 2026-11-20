@@ -39,6 +39,17 @@ token Secret in the cluster.
    - expiry one year; the date is in `credential-expiry.yaml`, which opens a reminder issue.
 2. Store it as `cloudflare_api_token` in `tofu/secrets.sops.yaml`.
 
+## Backups (Cloudflare R2)
+
+One bucket per app, named `<app>-backups`, in the EU jurisdiction. The buckets are code
+(`tofu/backups.tf`, a list of app names); the OpenTofu token needs **Workers R2 Storage Edit** for
+them. Per app, by hand (creating tokens has no narrow API permission):
+
+1. R2 → Manage API tokens → **Create Account API token**, name `<app>-backups`: **Object Read &
+   Write**, **specific bucket** `<app>-backups` (EU jurisdiction), TTL one year.
+2. Store its Access Key ID and Secret Access Key encrypted next to the app's backup job, and add
+   the expiry date to `credential-expiry.yaml`.
+
 ## Alerts
 
 - **ntfy** (ntfy.sh, no account): the topic is in
