@@ -24,7 +24,7 @@ ARG ACTIONLINT_VERSION=1.7.12
 # renovate: datasource=github-releases depName=gitleaks/gitleaks
 ARG GITLEAKS_VERSION=8.30.1
 # renovate: datasource=github-releases depName=restic/restic
-ARG RESTIC_VERSION=0.19.1
+ARG RESTIC_VERSION=0.20.0
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 WORKDIR /tmp/dl
