@@ -59,18 +59,19 @@ import {
 resource "cloudflare_r2_bucket_lifecycle" "enjoydevops_backups" {
   account_id  = local.cf_account_id
   bucket_name = cloudflare_r2_bucket.enjoydevops_backups.name
+  # Cloudflare returns rules sorted by id; listing them the same way keeps plans clean.
   rules = concat(
-    [for prefix in ["edo/", "kratos/"] : {
-      id                        = "expire-${trimsuffix(prefix, "/")}-after-30-days"
-      enabled                   = true
-      conditions                = { prefix = prefix }
-      delete_objects_transition = { condition = { type = "Age", max_age = 2592000 } }
-    }],
     [{
       id                                 = "abort-unfinished-uploads"
       enabled                            = true
       conditions                         = { prefix = "" }
       abort_multipart_uploads_transition = { condition = { type = "Age", max_age = 86400 } }
+    }],
+    [for prefix in ["edo/", "kratos/"] : {
+      id                        = "expire-${trimsuffix(prefix, "/")}-after-30-days"
+      enabled                   = true
+      conditions                = { prefix = prefix }
+      delete_objects_transition = { condition = { type = "Age", max_age = 2592000 } }
     }]
   )
 }
