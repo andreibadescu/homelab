@@ -1,0 +1,115 @@
+# Incoming traffic to the monitoring stack: default deny, then only who needs what. Loki, Tempo and
+# Alertmanager have no login, so this is what stops other pods reading logs or silencing alerts.
+# Outgoing traffic stays open (Prometheus scrapes the node and the API; Alertmanager calls ntfy and
+# healthchecks.io). Kubelet probes and the API server's webhook calls come from the node, which
+# Cilium always allows.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-ingress, namespace: monitoring}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: prometheus, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: grafana}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: alloy}} # OpenTelemetry metrics (remote write)
+        - podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: showcase}}
+          podSelector: {matchLabels: {app.kubernetes.io/instance: grafana-public}}
+      ports: [{port: 9090}]
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}}]
+      ports: [{port: 8080}] # config reloader metrics
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: alertmanager, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: alertmanager}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: grafana}}
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: flux-system}}
+          podSelector: {matchLabels: {app: notification-controller}}
+      ports: [{port: 9093}]
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}}]
+      ports: [{port: 8080}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: grafana, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: grafana}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: tailscale}}
+          podSelector: {matchLabels: {tailscale.com/parent-resource: grafana, tailscale.com/parent-resource-ns: monitoring}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+      ports: [{port: 3000}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: loki, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: loki}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: alloy}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: grafana}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: loki}}
+      ports: [{port: 3100}]
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: loki}}}]
+      ports: [{port: 9095}, {port: 7946}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: tempo, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: tempo}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: grafana}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: tempo}}
+      ports: [{port: 3200}]
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: alloy}}}]
+      ports: [{port: 4317}]
+---
+# Alloy receives OpenTelemetry from any app in the cluster (the worst a pod can do is send telemetry).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: alloy, namespace: monitoring}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: alloy}}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{namespaceSelector: {}}]
+      ports: [{port: 4317}, {port: 4318}]
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}}]
+      ports: [{port: 12345}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: scraped-by-prometheus, namespace: monitoring}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [kube-state-metrics, prometheus-blackbox-exporter, kube-prometheus-stack-prometheus-operator]
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: prometheus}}}]
+      ports: [{port: 8080}, {port: 8081}, {port: 9115}, {port: 10250}]

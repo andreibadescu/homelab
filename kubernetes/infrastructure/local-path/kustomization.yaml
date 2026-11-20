@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   # Upstream manifest pinned to a release tag (Renovate bumps the tag).
   - https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.37/deploy/local-path-storage.yaml
+  - networkpolicies.yaml
 patches:
   # The helper pods that create volume folders mount host paths, which Talos's default Pod
   # Security level forbids.

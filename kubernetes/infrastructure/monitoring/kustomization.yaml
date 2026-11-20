@@ -11,3 +11,4 @@ resources:
   - dashboards
   - ingress.yaml
   - flux-alerts.yaml
+  - networkpolicies.yaml

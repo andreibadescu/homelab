@@ -4,3 +4,4 @@ resources:
   - namespace.yaml
   - operator-oauth.sops.yaml
   - release.yaml
+  - networkpolicies.yaml

@@ -1,0 +1,8 @@
+# Nothing needs to connect to this namespace (its health probes come from the node, which Cilium
+# always allows). Outgoing traffic stays open: it talks to the Kubernetes API.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-ingress, namespace: kubelet-serving-cert-approver}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]

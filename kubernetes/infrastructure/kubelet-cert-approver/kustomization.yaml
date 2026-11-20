@@ -4,3 +4,4 @@ resources:
   # Approves the kubelets' serving certificate requests, so metrics-server can verify kubelets.
   # Upstream manifest pinned to a release tag (Renovate bumps the tag).
   - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/v0.12.1/deploy/standalone-install.yaml
+  - networkpolicies.yaml
