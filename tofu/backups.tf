@@ -6,7 +6,7 @@
 # Adding an app: add its name here, `make apply`, then create its access key
 # (docs/external-services.md, "Backups").
 locals {
-  backup_apps = toset(["ente"])
+  backup_apps = toset(["ente", "enjoydevops"])
 }
 
 resource "cloudflare_r2_bucket" "backups" {
@@ -38,10 +38,11 @@ resource "cloudflare_r2_bucket_lifecycle" "backups" {
   }]
 }
 
-# EnjoyDevOps's bucket existed before it was code (created by the EnjoyDevOps project). Its cluster
-# backups live under restic/ (restic) and pitr/ (CloudNativePG, expired by its own retention), and must
-# never be touched by a bucket rule: deleting old restic files would break every snapshot. Only the
-# Mac's old age-encrypted dumps (edo/, kratos/) expire, after 30 days.
+# EnjoyDevOps's original bucket (default jurisdiction), created by the EnjoyDevOps project before it was
+# code. Its backups move to the EU bucket enjoydevops-backups above (backup_apps); this one keeps only
+# the Mac's age-encrypted dumps (edo/, kratos/, expiring after 30 days) and the backups written before
+# the move, and is retired once the Mac is switched off. restic/ and pitr/ must never be touched by a
+# bucket rule while they are in use: deleting old restic files would break every snapshot.
 resource "cloudflare_r2_bucket" "enjoydevops_backups" {
   account_id = local.cf_account_id
   name       = "enjoydevops-backups"
