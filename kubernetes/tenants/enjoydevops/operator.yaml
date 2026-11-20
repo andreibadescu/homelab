@@ -1,0 +1,71 @@
+# Operator access for EnjoyDevOps's own maintenance (restore rehearsal, cutover): exec and port-forward
+# into its pods, delete pods (restarts), read logs and the database status. No Secrets and no changes to
+# objects Flux manages (those stay commits). There is no stored token: `make tenant-kubeconfig
+# TENANT=enjoydevops ACCOUNT=operator` writes a kubeconfig with a token valid for 24 hours.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: operator, namespace: enjoydevops}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: operator, namespace: enjoydevops}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch, delete]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/portforward]
+    verbs: [get, create]
+  - apiGroups: [""]
+    resources: [services, events]
+    verbs: [get, list, watch]
+  - apiGroups: [postgresql.cnpg.io]
+    resources: [clusters, backups]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: operator, namespace: enjoydevops}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: operator}
+subjects: [{kind: ServiceAccount, name: operator, namespace: enjoydevops}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: operator, namespace: edo-lab}
+rules:
+  - apiGroups: [""]
+    resources: [pods, services, events]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods/portforward]
+    verbs: [get, create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: operator, namespace: edo-lab}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: operator}
+subjects: [{kind: ServiceAccount, name: operator, namespace: enjoydevops}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: operator, namespace: edo-labs}
+rules:
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: operator, namespace: edo-labs}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: operator}
+subjects: [{kind: ServiceAccount, name: operator, namespace: enjoydevops}]
