@@ -34,12 +34,16 @@ spec:
                   set -eu
                   restic restore latest --host ente --tag database --target /restore
                   restic restore latest --host ente --tag files --target /restore
-                  if diff -r /restore/data /data >/dev/null; then
-                    echo "files: restored copy identical to live storage ($(find /restore/data -type f | wc -l) files)"
-                  else
-                    echo "files: differences between backup and live storage (changes since the backup?):"
-                    diff -rq /restore/data /data | head -20
-                  fi
+                  # Compare every restored object file with the live one (MinIO's own bookkeeping in
+                  # .minio.sys changes constantly and is skipped). Files added since the backup don't
+                  # count; files changed or deleted since then are reported, not failed.
+                  cd /restore/data
+                  find . -type f ! -path './.minio.sys/*' -exec sha256sum {} + > /tmp/backup.sums
+                  total=$(wc -l < /tmp/backup.sums)
+                  cd /data
+                  same=$(sha256sum -c /tmp/backup.sums 2>/dev/null | grep -c ': OK$' || true)
+                  echo "files: $same of $total backed-up files identical to live storage"
+                  [ "$total" -eq 0 ] || [ "$same" -gt 0 ] || { echo "files: no restored file matches"; exit 1; }
               envFrom:
                 - secretRef: {name: ente-backup}
               env:
