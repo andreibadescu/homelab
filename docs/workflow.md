@@ -18,7 +18,8 @@ Cloudflare, GitHub or healthchecks.io. The only manual steps are the ones no API
 5. After the merge:
    - `kubernetes/`: Flux applies `main` within a minute (`flux reconcile` to hurry it).
    - `tofu/`: run `make plan` from an up-to-date `main` and `make apply` (attach the plan summary to
-     the pull request before merging).
+     the pull request before merging). `make apply` updates the encrypted state
+     (`tofu/terraform.tfstate`): commit it in a follow-up pull request, or with the next change.
 
 ## Rules
 

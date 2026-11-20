@@ -105,6 +105,21 @@ spec:
               - url_file: /etc/alertmanager/secrets/alertmanager-notify/healthchecks-url
                 send_resolved: false
 
+    # Custom alerts that belong to the platform (created by the chart, so they never wait for CRDs).
+    additionalPrometheusRulesMap:
+      node:
+        groups:
+          - name: node
+            rules:
+              # /var holds container images and the lab VMs' disks; at 85% Kubernetes starts deleting
+              # unused images, which means slow re-downloads.
+              - alert: NodeSystemDiskFilling
+                expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint="/var"} / node_filesystem_size_bytes{mountpoint="/var"}) > 75
+                for: 15m
+                labels: {severity: warning}
+                annotations:
+                  summary: "The node's system partition (/var) is {{ $value | humanize }}% full"
+                  description: "Container images and lab VM disks live on /var; Kubernetes deletes unused images from 85%."
     grafana:
       # Stateless: dashboards and the Prometheus data source come from the chart, the login from a
       # SOPS secret. Reached at https://grafana.junco-ulmer.ts.net (ingress.yaml).
