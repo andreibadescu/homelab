@@ -5,3 +5,4 @@ resources:
   - website-monitoring
   - showcase
   - cloudflared
+  - platform-builds

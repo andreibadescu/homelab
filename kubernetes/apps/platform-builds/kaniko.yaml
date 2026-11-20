@@ -1,0 +1,79 @@
+# The image builder used by projects' build jobs: registry.homelab.internal/platform/kaniko:<version>.
+# Built from Chainguard's maintained fork of Kaniko (Google archived the original), pinned to the commit
+# behind the version tag, without the cloud credential helpers (logins come from a Docker config file).
+# The image is assembled with crane (checksum-verified) and pushed by platform-builder, which may only
+# push platform/**. A new version is a new Job name; the completed Job is kept, so it runs once.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-image-v1-25-23
+  namespace: platform-builds
+  annotations:
+    # Jobs are immutable: if this spec changes, Flux recreates the Job (and it builds again).
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 3600
+  template:
+    metadata:
+      labels: {app: kaniko-image}
+    spec:
+      restartPolicy: Never
+      priorityClassName: builds
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: build
+          image: docker.io/library/golang:1.26.9-alpine@sha256:3082400e369fa24d5fc60bca20edab3f6d604e0c5a690ec66b295eff4dd87ade
+          command: [sh, -euc]
+          args:
+            - |
+              W=/work
+              export HOME=$W GOPATH=$W/gopath GOCACHE=$W/cache CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+              echo "source: chainguard-forks/kaniko $KANIKO_VERSION ($KANIKO_COMMIT)"
+              mkdir -p $W/src $W/rootfs/kaniko/ssl/certs $W/rootfs/kaniko/.docker $W/rootfs/etc
+              wget -qO- "https://codeload.github.com/chainguard-forks/kaniko/tar.gz/$KANIKO_COMMIT" | tar -xz -C $W/src --strip-components=1
+              cd $W/src
+              go build -trimpath -ldflags "-extldflags -static -w -s -X github.com/chainguard-dev/kaniko/pkg/version.version=$KANIKO_VERSION" \
+                -o $W/rootfs/kaniko/executor ./cmd/executor
+              cp /etc/ssl/certs/ca-certificates.crt $W/rootfs/kaniko/ssl/certs/
+              printf 'passwd: compat\ngroup: compat\nshadow: compat\nhosts: files dns\n' > $W/rootfs/etc/nsswitch.conf
+              chmod 777 $W/rootfs/kaniko
+              tar -C $W/rootfs -cf $W/layer.tar kaniko etc
+              wget -qO $W/crane.tgz "https://github.com/google/go-containerregistry/releases/download/$CRANE_VERSION/go-containerregistry_Linux_x86_64.tar.gz"
+              echo "$CRANE_SHA256  $W/crane.tgz" | sha256sum -c -
+              tar -xzf $W/crane.tgz -C $W crane
+              REF=zot.registry.svc.cluster.local:5000/platform/kaniko:$KANIKO_VERSION
+              $W/crane append --insecure --platform linux/amd64 -f $W/layer.tar -t $REF
+              $W/crane mutate --insecure $REF -t $REF --entrypoint /kaniko/executor --workdir /workspace \
+                --env HOME=/root --env USER=root --env PATH=/usr/local/bin:/kaniko \
+                --env SSL_CERT_DIR=/kaniko/ssl/certs --env DOCKER_CONFIG=/kaniko/.docker/
+              echo "pushed $REF@$($W/crane digest --insecure $REF)"
+          env:
+            - {name: KANIKO_VERSION, value: v1.25.23}
+            - {name: KANIKO_COMMIT, value: 8c3f2f07afb8f362447ff43d439cf0b743687ef0}
+            - {name: CRANE_VERSION, value: v0.22.1}
+            - {name: CRANE_SHA256, value: 0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0}
+            - {name: DOCKER_CONFIG, value: /docker}
+          resources:
+            requests: {cpu: 500m, memory: 512Mi}
+            limits: {cpu: "4", memory: 2Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: work, mountPath: /work}
+            - {name: tmp, mountPath: /tmp}
+            - {name: docker, mountPath: /docker, readOnly: true}
+      volumes:
+        - {name: work, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}
+        - name: docker
+          secret:
+            secretName: registry-push
+            items: [{key: .dockerconfigjson, path: config.json}]
