@@ -2,6 +2,7 @@
 #   Tailscale proxies -> museum :8080, web :3000/:3009, s3 :3200
 #   museum -> postgres :5432, museum -> ente-s3 Tailscale proxy :443 (same HTTPS name as phones)
 #   bucket job -> s3 :3200; storage-limit job -> postgres :5432; everything -> cluster DNS
+#   backup job -> postgres :5432 and R2 (internet, HTTPS)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: default-deny, namespace: ente}
@@ -50,6 +51,7 @@ spec:
     - from:
         - podSelector: {matchLabels: {app: ente-museum}}
         - podSelector: {matchLabels: {app: ente-storage-limit}}
+        - podSelector: {matchLabels: {app: ente-backup}}
       ports: [{port: 5432}]
 ---
 apiVersion: networking.k8s.io/v1
@@ -99,3 +101,19 @@ spec:
   egress:
     - to: [{podSelector: {matchLabels: {app: ente-postgres}}}]
       ports: [{port: 5432}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: backup, namespace: ente}
+spec:
+  podSelector: {matchLabels: {app: ente-backup}}
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to: [{podSelector: {matchLabels: {app: ente-postgres}}}]
+      ports: [{port: 5432}]
+    # R2 over HTTPS (public internet only; private ranges and the tailnet excluded).
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10]
+      ports: [{protocol: TCP, port: 443}]

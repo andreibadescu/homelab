@@ -11,6 +11,8 @@ resources:
   - s3-cluster-path.yaml
   - networkpolicies.yaml
   - storage-limit.yaml
+  - backup.sops.yaml
+  - backup.yaml
 configMapGenerator:
   # Museum reads this at startup; the generated name changes with the content, so a config change
   # rolls museum automatically.

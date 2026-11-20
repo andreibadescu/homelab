@@ -1,0 +1,104 @@
+# Nightly backup of Ente to its own restic repository in R2 (bucket ente-backups, EU): first a
+# consistent dump of the database, then the object storage (photos and files, already end-to-end
+# encrypted by the apps). restic encrypts both again before upload. Restoring: docs/backups.md.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ente-backup
+  namespace: ente
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/Bucharest
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 21600
+      template:
+        metadata:
+          labels: {app: ente-backup}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+          initContainers:
+            - name: dump-database
+              image: docker.io/library/postgres:15.20-alpine
+              command: [pg_dump, --format=custom, --file=/work/ente_db.dump]
+              env:
+                - {name: PGHOST, value: ente-postgres}
+                - {name: PGUSER, value: pguser}
+                - {name: PGDATABASE, value: ente_db}
+                - name: PGPASSWORD
+                  valueFrom: {secretKeyRef: {name: ente-secrets, key: POSTGRES_PASSWORD}}
+              resources:
+                requests: {cpu: 20m, memory: 32Mi}
+                limits: {memory: 256Mi}
+              securityContext:
+                runAsUser: 70
+                runAsGroup: 70
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: work, mountPath: /work}
+          containers:
+            - name: restic
+              image: docker.io/restic/restic:0.19.1
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup --host ente --tag database /work/ente_db.dump
+                  restic backup --host ente --tag files /data
+                  restic forget --host ente --group-by host,tags --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+                  restic check
+              envFrom:
+                - secretRef: {name: ente-backup}
+              env:
+                - {name: RESTIC_CACHE_DIR, value: /cache}
+                - {name: TMPDIR, value: /tmp}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 1Gi}
+              securityContext:
+                # MinIO's user, to read its files (mounted read-only).
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: work, mountPath: /work, readOnly: true}
+                - {name: s3-data, mountPath: /data, readOnly: true}
+                - {name: cache, mountPath: /cache}
+                - {name: tmp, mountPath: /tmp}
+          volumes:
+            - {name: work, emptyDir: {}}
+            - {name: cache, emptyDir: {}}
+            - {name: tmp, emptyDir: {}}
+            - name: s3-data
+              persistentVolumeClaim: {claimName: data-ente-s3-0, readOnly: true}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ente-backup
+  namespace: ente
+spec:
+  groups:
+    - name: ente-backup
+      rules:
+        # One missed night is tolerated (30 hours); "absent" catches a backup that never succeeded.
+        - alert: EnteBackupMissing
+          expr: |
+            (time() - kube_cronjob_status_last_successful_time{namespace="ente", cronjob="ente-backup"}) > 30 * 3600
+              or absent(kube_cronjob_status_last_successful_time{namespace="ente", cronjob="ente-backup"})
+          for: 1h
+          labels: {severity: critical}
+          annotations:
+            summary: Ente has had no successful backup for more than 30 hours
+            description: "Check the last ente-backup job: kubectl -n ente logs job/<name> -c restic"

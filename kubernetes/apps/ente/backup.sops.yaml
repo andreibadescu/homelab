@@ -1,0 +1,38 @@
+# Ente backups: restic repository in R2 (bucket ente-backups, EU) and its password. The access key
+# opens only this bucket; the password is also in the password manager (without it the backups
+# cannot be read).
+apiVersion: v1
+kind: Secret
+metadata:
+    name: ente-backup
+    namespace: ente
+type: Opaque
+stringData:
+    RESTIC_REPOSITORY: ENC[AES256_GCM,data:gwuyhSoYp54UsyxZYVq02sz6h6VTEJbG4Yqhb7DeR1eJKLFQepC580YJKaAjtoTE6LM8yPU+7s8AMO2tqNQksHxAsirIj0HoFwWLyBdzQHwPsjYg,iv:27tNZG/jYl9LrzUTkZIHiHZBegO3zCynUoPqY8NR2iA=,tag:ZQhuG0QSXINkMVbX0cEGBA==,type:str]
+    RESTIC_PASSWORD: ENC[AES256_GCM,data:uh23f9jvoJgy2XoA2M49aI0jg/x5ftg9KaU6hGW05ODioFrYRuckgESgaKe7upDa,iv:oy8wP06UApbb0H9NhalBOuqYXDjxgxxHT00KDBkj8AM=,tag:P4yJwDkOBPx6rFZ91nBGbw==,type:str]
+    AWS_ACCESS_KEY_ID: ENC[AES256_GCM,data:UC1vwYzhXS1dW9kAsE6Ixn2ivIfhl434UdcXLYnCMK8=,iv:0InyRHqTF3sCQ7ih6P+y7PJv3BGIP9tb1NfbSfx5i8g=,tag:KUA58U4LWsl5fpCG9tYSMA==,type:str]
+    AWS_SECRET_ACCESS_KEY: ENC[AES256_GCM,data:qH9minu0kRpOm6gC12DvB//jbdYnfzvKV2nF98EFpSC7OLmqAhPEpL1NFkjDn0+fkWGRl35rabIsZ+5Y0fEmJA==,iv:SRC9JHALDmXmnPsrQQjOsWiHfXfMggo05T536jTpYC8=,tag:tDGwG4a3e8NE9kaZV/d7qQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3cW41YkptNWhHalA3bEFq
+            Ly8rdHJJZXl3VFFWRm5EQjAxcFZwWWEyKzNjCnBNR3VCek5HN0hIc1F6VEpjeVps
+            TFpUYUtxMUhMZWNpMTA5Ukx5N2tDLzAKLS0tIHRnK0dzR2pzcTUzamM1M3NqNUh5
+            Ky9lOXdvRUVvWXVjWnlmZ0hua0NROTQKsxiFfryhjNGKIZBgwi5+DfVq3YRRAIW8
+            /3gED0Wr/vNaCkvC7raIvnwQMPhi+cv8ixs/dNdfxwG87yRIzWG7Og==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cuhqqh3ruz47phnh6g2s0aacdasv38fc3xx63hlgk85uf3u2gp6s88vh08
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBCbEtUWG1CZ0NQU3pqRlJ5
+            VGMxSDJUWUt0QVc5dWdRbW9oc2hXNHl0L1hVCjUyZ2psbUY0S0RGS3FhamcwUzJN
+            MnJ2dUFreStBc0kwTURBbjBUK2JtM3cKLS0tIDlvNEViL1ZYb2grN2RCM0YzcFdX
+            aWRYYytwN0czVlJZdXJiM2w3ajc5V0kK/USitYSHCpo6T4RR1mik2QsVSKjGwApE
+            ps8CCxG3ltBPLsvVfzuiAN2BB9I8V82VjYMVIzL4S5nwl8qJ59JC6g==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1kp2swzluhtwm6gfgkpc7pxmhxqdacxz3y85a4hyl0cdshkkggflqecypt2
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-20T09:30:41Z"
+    mac: ENC[AES256_GCM,data:vk4V7MG/d0M//e8RbQIoFj7e4XlYjc/BRmZG0PF3i/WWN0SMalDXEZkUKvjcdcFjj0kxL9H/T6OzCIS0MnZCUFWpk03JgacN1mCs4OiMeJWZOHzD/T7PW8zf6cDcMwuLpaJvvxLhjRF5dOkbSe+3Z4vSFd5FyK6OSVUK9hXu4Ng=,iv:eFOomSky8KYhv3ZrIgtPt0Jy0r2lpKepqS8R+ylQBIg=,tag:JoGkyIvECBl9ZNWI9xs7BQ==,type:str]
+    version: 3.13.3
