@@ -24,7 +24,7 @@ DOCKER_RUN = docker run --rm -i $(shell test -t 0 && echo -t) \
 	-v "$(CURDIR)":/workspace \
 	-v "$(CRED_DIR)":/root/.homelab \
 	-v "$(AGE_KEY)":/root/.config/sops/age/keys.txt:ro \
-	-e GITHUB_TOKEN -e APP -e ARGS -e TENANT \
+	-e GITHUB_TOKEN -e APP -e ARGS -e TENANT -e ACCOUNT \
 	$(IMAGE)
 
 # Once per clone (on the host, not in the toolbox): run `make check` automatically before every push
@@ -81,7 +81,7 @@ restic:
 # Kubeconfig for a project's build agent, limited to its builds namespace (docs/builds.md).
 # Example: make tenant-kubeconfig TENANT=enjoydevops
 tenant-kubeconfig:
-	scripts/tenant-kubeconfig.sh "$(TENANT)"
+	scripts/tenant-kubeconfig.sh "$(TENANT)" "$(or $(ACCOUNT),builder)"
 
 plan:
 	$(TOFU) plan
