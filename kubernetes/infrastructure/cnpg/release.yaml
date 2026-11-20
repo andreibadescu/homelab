@@ -1,0 +1,62 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cnpg
+  namespace: cnpg-system
+spec:
+  interval: 1h
+  url: https://cloudnative-pg.github.io/charts
+---
+# The operator. Updates are merged by hand (renovate.json). In-place instance-manager updates: an
+# operator upgrade replaces the manager inside running database pods instead of restarting PostgreSQL.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudnative-pg
+  namespace: cnpg-system
+spec:
+  interval: 30m
+  releaseName: cnpg
+  chart:
+    spec:
+      chart: cloudnative-pg
+      version: 0.29.1
+      sourceRef: {kind: HelmRepository, name: cnpg}
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  values:
+    config:
+      data:
+        ENABLE_INSTANCE_MANAGER_INPLACE_UPDATES: "true"
+    resources:
+      requests: {cpu: 20m, memory: 64Mi}
+      limits: {memory: 512Mi}
+---
+# Barman Cloud plugin: continuous WAL archiving and base backups to object storage (R2). Its link to the
+# operator uses certificates from cert-manager.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: plugin-barman-cloud
+  namespace: cnpg-system
+spec:
+  interval: 30m
+  releaseName: barman-cloud
+  dependsOn:
+    - {name: cert-manager, namespace: cert-manager}
+    - {name: cloudnative-pg, namespace: cnpg-system}
+  chart:
+    spec:
+      chart: plugin-barman-cloud
+      version: 0.9.0
+      sourceRef: {kind: HelmRepository, name: cnpg}
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  values:
+    resources:
+      requests: {cpu: 10m, memory: 32Mi}
+      limits: {memory: 256Mi}

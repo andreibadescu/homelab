@@ -1,0 +1,8 @@
+# cert-manager issues TLS certificates inside the cluster; today only for the link between the
+# CloudNativePG operator and its Barman Cloud backup plugin (kubernetes/infrastructure/cnpg).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

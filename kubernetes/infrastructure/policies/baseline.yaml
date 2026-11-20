@@ -37,13 +37,14 @@ spec:
         - cidr: 100.64.0.0/10
         - cidr: 169.254.0.0/16
 ---
-# Kubernetes API: denied to workloads like the above, except edo-lab (EnjoyDevOps's lab controller).
+# Kubernetes API: denied to workloads like the above, except edo-lab (EnjoyDevOps's lab controller),
+# operators that need only the API, and CloudNativePG's database pods.
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: baseline-workload-api
 spec:
-  description: Workloads never reach the Kubernetes API (edo-lab excepted).
+  description: Workloads never reach the Kubernetes API (edo-lab, operators and CloudNativePG database pods excepted).
   endpointSelector:
     matchExpressions:
       - key: k8s:io.kubernetes.pod.namespace
@@ -59,6 +60,13 @@ spec:
           - kubevirt
           # Creates the learner VMs through the Kubernetes API.
           - edo-lab
+          # Operators that only need the API (they stay under the home-network and node rule above).
+          - cert-manager
+          - cnpg-system
+      # CloudNativePG's database pods manage themselves through the API. Only the operator may set this
+      # label (cnpg-cluster-label.yaml).
+      - key: k8s:cnpg.io/cluster
+        operator: DoesNotExist
   enableDefaultDeny:
     egress: false
     ingress: false

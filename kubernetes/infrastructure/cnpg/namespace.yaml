@@ -1,0 +1,8 @@
+# CloudNativePG: the operator that runs PostgreSQL clusters for projects (point-in-time recovery to R2
+# through the Barman Cloud plugin). See docs/databases.md.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpg-system
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
