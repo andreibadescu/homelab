@@ -1,0 +1,17 @@
+# The KubeVirt installation the operator maintains. One replica of each component: single node, and it
+# saves RAM.
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: kubevirt
+spec:
+  certificateRotateStrategy: {}
+  configuration:
+    developerConfiguration:
+      featureGates: []
+  customizeComponents: {}
+  imagePullPolicy: IfNotPresent
+  workloadUpdateStrategy: {}
+  infra:
+    replicas: 1

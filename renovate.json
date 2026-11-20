@@ -31,12 +31,13 @@
     },
     {
       "customType": "regex",
-      "description": "Upstream manifests referenced by release tag in kustomization.yaml",
+      "description": "Upstream manifests referenced by release tag in kustomization.yaml (raw files and release downloads)",
       "managerFilePatterns": [
         "/^kubernetes/.+/kustomization\\.yaml$/"
       ],
       "matchStrings": [
-        "https://raw\\.githubusercontent\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/(?<currentValue>v[^/\\s]+)/"
+        "https://raw\\.githubusercontent\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/(?<currentValue>v[^/\\s]+)/",
+        "https://github\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/releases/download/(?<currentValue>v[^/\\s]+)/"
       ],
       "datasourceTemplate": "github-releases"
     }

@@ -1,0 +1,10 @@
+# KubeVirt: virtual machines on Kubernetes, using the CPU's hardware virtualisation (/dev/kvm). Runs the
+# EnjoyDevOps learner labs, and offers /dev/kvm to build jobs as the resource devices.kubevirt.io/kvm.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # Upstream operator manifest pinned to a release (Renovate bumps the tag). Creates the namespace
+  # (Pod Security privileged), the CRDs and the operator.
+  - https://github.com/kubevirt/kubevirt/releases/download/v1.9.1/kubevirt-operator.yaml
+  - kubevirt.yaml
+  - networkpolicies.yaml
