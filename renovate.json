@@ -5,7 +5,8 @@
     "helpers:pinGitHubActionDigests"
   ],
   "ignoreUnstable": true,
-  "minimumReleaseAge": null,
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
   "customManagers": [
     {
       "customType": "regex",
