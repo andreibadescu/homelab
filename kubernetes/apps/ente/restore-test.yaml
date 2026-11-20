@@ -27,7 +27,7 @@ spec:
           securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
           initContainers:
             - name: restore
-              image: docker.io/restic/restic:0.19.1
+              image: docker.io/restic/restic:0.20.0
               command: [sh, -c]
               args:
                 - |
