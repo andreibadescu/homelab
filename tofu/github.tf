@@ -11,11 +11,14 @@ resource "github_repository" "homelab" {
   has_wiki        = false
   has_discussions = false
 
-  allow_merge_commit     = true
-  allow_squash_merge     = true
-  allow_rebase_merge     = true
-  allow_auto_merge       = true # Renovate merges small updates once CI passes
-  delete_branch_on_merge = true
+  # Squash merges only: one commit per pull request, titled like the pull request (docs/workflow.md).
+  allow_merge_commit          = false
+  allow_rebase_merge          = false
+  allow_squash_merge          = true
+  squash_merge_commit_title   = "PR_TITLE"
+  squash_merge_commit_message = "PR_BODY"
+  allow_auto_merge            = true # pull requests (Renovate's too) merge themselves once CI passes
+  delete_branch_on_merge      = true
 
   security_and_analysis {
     secret_scanning {
@@ -39,14 +42,18 @@ resource "github_repository_vulnerability_alerts" "homelab" {
   enabled    = true
 }
 
-# CI must pass before a pull request can merge; no force pushes or deletion of main. The owner can
-# still push directly (enforce_admins = false).
+# Changes reach main through pull requests that pass CI; no force pushes or deletion of main. The
+# owner can still push directly in an emergency (enforce_admins = false).
 resource "github_branch_protection" "main" {
   repository_id       = github_repository.homelab.node_id
   pattern             = "main"
   enforce_admins      = false
   allows_force_pushes = false
   allows_deletions    = false
+
+  required_pull_request_reviews {
+    required_approving_review_count = 0
+  }
 
   required_status_checks {
     strict   = false

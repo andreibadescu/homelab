@@ -15,7 +15,7 @@ export GITHUB_TOKEN ?= $(shell gh auth token 2>/dev/null)
 
 ifndef HOMELAB_TOOLBOX
 
-.PHONY: toolbox shell mac-dns $(TARGETS)
+.PHONY: toolbox shell hooks mac-dns $(TARGETS)
 
 toolbox:
 	docker build -q -t $(IMAGE) .devcontainer >/dev/null
@@ -26,6 +26,12 @@ DOCKER_RUN = docker run --rm -i $(shell test -t 0 && echo -t) \
 	-v "$(AGE_KEY)":/root/.config/sops/age/keys.txt:ro \
 	-e GITHUB_TOKEN -e APP -e ARGS \
 	$(IMAGE)
+
+# Once per clone (on the host, not in the toolbox): run `make check` automatically before every push
+# (.githooks/pre-push). Links the hook into .git/hooks; doesn't change any git configuration.
+hooks:
+	ln -sf ../../.githooks/pre-push .git/hooks/pre-push
+	@echo "pre-push hook installed: git push now runs make check first (skip once: git push --no-verify)"
 
 # On the admin Mac (not in the toolbox): send only *.ts.net lookups to Tailscale's resolver, leaving
 # the Mac's other DNS alone. Asks for your password (sudo). Undo: sudo rm /etc/resolver/ts.net
