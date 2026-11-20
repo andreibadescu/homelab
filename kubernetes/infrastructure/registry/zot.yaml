@@ -74,6 +74,13 @@ spec:
             "auth": { "htpasswd": { "path": "/secret/htpasswd" } },
             "accessControl": {
               "repositories": {
+                "enjoydevops/**": {
+                  "anonymousPolicy": ["read"],
+                  "policies": [
+                    { "users": ["homelab-admin"], "actions": ["read", "create", "update", "delete"] },
+                    { "users": ["enjoydevops-builder"], "actions": ["read", "create", "update"] }
+                  ]
+                },
                 "**": {
                   "anonymousPolicy": ["read"],
                   "policies": [{ "users": ["homelab-admin"], "actions": ["read", "create", "update", "delete"] }]

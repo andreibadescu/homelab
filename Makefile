@@ -7,7 +7,7 @@ CRED_DIR ?= $(HOME)/.homelab
 AGE_KEY  ?= $(HOME)/Library/Application Support/sops/age/keys.txt
 TOFU     := tofu -chdir=tofu
 
-TARGETS := init upgrade lock fmt validate check plan apply rebuild output creds check-talos-config sync-manifests restic
+TARGETS := init upgrade lock fmt validate check plan apply rebuild output creds check-talos-config sync-manifests restic tenant-kubeconfig
 
 # OpenTofu manages the Flux deploy key on GitHub with the gh CLI login, passed only
 # through the environment.
@@ -24,7 +24,7 @@ DOCKER_RUN = docker run --rm -i $(shell test -t 0 && echo -t) \
 	-v "$(CURDIR)":/workspace \
 	-v "$(CRED_DIR)":/root/.homelab \
 	-v "$(AGE_KEY)":/root/.config/sops/age/keys.txt:ro \
-	-e GITHUB_TOKEN -e APP -e ARGS \
+	-e GITHUB_TOKEN -e APP -e ARGS -e TENANT \
 	$(IMAGE)
 
 # Once per clone (on the host, not in the toolbox): run `make check` automatically before every push
@@ -77,6 +77,11 @@ check:
 # Example: make restic APP=ente ARGS="snapshots"
 restic:
 	scripts/restic.sh "$(APP)" $(ARGS)
+
+# Kubeconfig for a project's build agent, limited to its builds namespace (docs/builds.md).
+# Example: make tenant-kubeconfig TENANT=enjoydevops
+tenant-kubeconfig:
+	scripts/tenant-kubeconfig.sh "$(TENANT)"
 
 plan:
 	$(TOFU) plan

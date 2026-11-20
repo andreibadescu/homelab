@@ -1,0 +1,30 @@
+# Access for EnjoyDevOps's build agent: start build pods and jobs in enjoydevops-builds, follow them,
+# nothing else in the cluster. `make tenant-kubeconfig TENANT=enjoydevops` turns the token into a
+# kubeconfig (docs/builds.md).
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: builder, namespace: enjoydevops-builds}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: builder, namespace: enjoydevops-builds}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch, create, delete]
+  - apiGroups: [""]
+    resources: [pods/attach, pods/log]
+    verbs: [get, create]
+  - apiGroups: [""]
+    resources: [persistentvolumeclaims, events]
+    verbs: [get, list, watch, create, delete]
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, watch, create, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: builder, namespace: enjoydevops-builds}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: builder}
+subjects: [{kind: ServiceAccount, name: builder, namespace: enjoydevops-builds}]

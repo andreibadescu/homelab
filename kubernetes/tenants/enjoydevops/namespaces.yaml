@@ -1,0 +1,36 @@
+# EnjoyDevOps (github.com/andreibadescu/enjoydevops): the app, its lab controller, the learners' lab
+# VMs, and its image builds. Learner VMs run at the baseline level (KubeVirt's launcher pods need it).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enjoydevops
+  labels:
+    homelab.andreibadescu.com/tenant: enjoydevops
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edo-lab
+  labels:
+    homelab.andreibadescu.com/tenant: enjoydevops
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edo-labs
+  labels:
+    homelab.andreibadescu.com/tenant: enjoydevops
+    pod-security.kubernetes.io/enforce: baseline
+---
+# Image builds (docs/builds.md): Kaniko runs as root inside its own container with no extra rights,
+# which the baseline level allows. May push to the registry.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enjoydevops-builds
+  labels:
+    homelab.andreibadescu.com/tenant: enjoydevops
+    homelab.andreibadescu.com/registry-push: "true"
+    pod-security.kubernetes.io/enforce: baseline
