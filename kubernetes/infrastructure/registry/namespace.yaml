@@ -1,0 +1,8 @@
+# Container registry (Zot): private images built at home and a download cache for public registries.
+# See docs/registry.md.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

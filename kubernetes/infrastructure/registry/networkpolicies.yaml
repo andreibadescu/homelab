@@ -1,0 +1,30 @@
+# Incoming: only build namespaces (label homelab.andreibadescu.com/registry-push=true) may connect, to
+# push. The node's container runtime pulls from it too; traffic from the node is always allowed.
+# Outgoing: DNS and HTTPS to the internet (the public registries it caches), nothing else.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny, namespace: registry}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: zot, namespace: registry}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/name: zot}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {homelab.andreibadescu.com/registry-push: "true"}}
+      ports: [{port: 5000}]
+  egress:
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10]
+      ports: [{protocol: TCP, port: 443}]

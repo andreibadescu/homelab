@@ -7,3 +7,4 @@ resources:
   - metrics-server
   - monitoring
   - policies
+  - registry

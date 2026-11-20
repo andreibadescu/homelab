@@ -1,0 +1,113 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: zot
+  namespace: registry
+spec:
+  interval: 1h
+  url: https://zotregistry.dev/helm-charts
+---
+# Zot stores every layer once (dedupe) and keeps, per project image, the 2 most recently pushed tags
+# (current and previous, for rollback); cached public images stay while they are pulled at least once a
+# month. The node's container runtime pulls from it at the fixed address 10.96.0.50:5000
+# (tofu/talos.tf, registry mirrors), which is reachable only inside the node, never from the LAN.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zot
+  namespace: registry
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: zot
+      version: 0.1.133
+      sourceRef:
+        kind: HelmRepository
+        name: zot
+  values:
+    service:
+      type: ClusterIP
+      clusterIP: 10.96.0.50
+      port: 5000
+    persistence: true
+    pvc:
+      create: true
+      storage: 50Gi
+      storageClassName: local-path
+    # Logins (htpasswd) come from the encrypted Secret zot-secret, not from these values: secretFiles
+    # is emptied so the chart doesn't create its example logins.
+    mountSecret: true
+    secretFiles: null
+    mountConfig: true
+    configFiles:
+      config.json: |-
+        {
+          "distSpecVersion": "1.1.1",
+          "storage": {
+            "rootDirectory": "/var/lib/registry",
+            "dedupe": true,
+            "gc": true,
+            "gcDelay": "1h",
+            "gcInterval": "24h",
+            "retention": {
+              "delay": "24h",
+              "policies": [
+                {
+                  "repositories": ["docker.io/**", "ghcr.io/**", "quay.io/**", "registry.k8s.io/**", "**/cache"],
+                  "deleteReferrers": false,
+                  "deleteUntagged": false,
+                  "keepTags": [{ "pulledWithin": "720h" }]
+                },
+                {
+                  "repositories": ["**"],
+                  "deleteReferrers": true,
+                  "deleteUntagged": true,
+                  "keepTags": [{ "mostRecentlyPushedCount": 2 }]
+                }
+              ]
+            }
+          },
+          "http": {
+            "address": "0.0.0.0",
+            "port": "5000",
+            "auth": { "htpasswd": { "path": "/secret/htpasswd" } },
+            "accessControl": {
+              "repositories": {
+                "**": {
+                  "anonymousPolicy": ["read"],
+                  "policies": [{ "users": ["homelab-admin"], "actions": ["read", "create", "update", "delete"] }]
+                }
+              }
+            }
+          },
+          "log": { "level": "info" },
+          "extensions": {
+            "sync": {
+              "enable": true,
+              "registries": [
+                { "urls": ["https://registry-1.docker.io"], "onDemand": true, "tlsVerify": true, "content": [{ "prefix": "**", "destination": "/docker.io" }] },
+                { "urls": ["https://ghcr.io"], "onDemand": true, "tlsVerify": true, "content": [{ "prefix": "**", "destination": "/ghcr.io" }] },
+                { "urls": ["https://quay.io"], "onDemand": true, "tlsVerify": true, "content": [{ "prefix": "**", "destination": "/quay.io" }] },
+                { "urls": ["https://registry.k8s.io"], "onDemand": true, "tlsVerify": true, "content": [{ "prefix": "**", "destination": "/registry.k8s.io" }] }
+              ]
+            }
+          }
+        }
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile: {type: RuntimeDefault}
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities: {drop: [ALL]}
+    extraVolumes:
+      - {name: tmp, emptyDir: {}}
+    extraVolumeMounts:
+      - {name: tmp, mountPath: /tmp}
+    resources:
+      requests: {cpu: 20m, memory: 64Mi}
+      limits: {memory: 512Mi}
