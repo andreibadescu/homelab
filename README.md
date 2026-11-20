@@ -34,6 +34,7 @@ flowchart LR
 | Observability | Prometheus, Alertmanager (alerts to ntfy), Grafana with dashboards as code, Loki (logs), Tempo (traces), Alloy (log collector and OpenTelemetry collector) | `kubernetes/infrastructure/monitoring` |
 | Apps | Ente Photos and Locker (end-to-end encrypted), default-deny network policies | `kubernetes/apps/ente` |
 | Public showcase | A separate read-only Grafana with one public dashboard, behind a Cloudflare Tunnel | `kubernetes/apps/showcase`, `kubernetes/apps/cloudflared`, `tofu/cloudflare.tf` |
+| Registry | Zot: private images built at home and a cache of docker.io, ghcr.io, quay.io and registry.k8s.io ([docs/registry.md](docs/registry.md)) | `kubernetes/infrastructure/registry`, `tofu/talos.tf` |
 | Backups | Nightly restic backups per app to its own R2 bucket, monthly restore test ([docs/backups.md](docs/backups.md)) | `tofu/backups.tf`, `kubernetes/apps/ente/backup.yaml` |
 | Website checks | enjoydevops.io and andreibadescu.com probed every minute (blackbox exporter) | `kubernetes/apps/website-monitoring` |
 
@@ -50,7 +51,7 @@ The homelab tailnet holds only the cluster's devices. People reach an app throug
 | `kubernetes/apps/` | Applications (one folder each) |
 | `.devcontainer/` | The toolbox image every command runs in |
 | `scripts/check.sh` | All repository checks (`make check`, also run by CI) |
-| `docs/` | BIOS checklist, recovery runbook, backups and restores, external services |
+| `docs/` | BIOS checklist, recovery runbook, backups and restores, registry, workflow, external services |
 | `renovate.json` | Automatic version updates |
 | `credential-expiry.yaml` | When the admin credentials expire (checked monthly by a GitHub workflow) |
 
