@@ -1,14 +1,16 @@
-# Cluster-wide baseline for workloads: pods in every namespace except the platform's own may never
-# reach the home network (router, other devices), the node itself (Talos API, kubelet) or the
-# Kubernetes API, whatever their own network policies allow. Cilium deny rules win over allow rules,
-# so a project can't loosen this. Internet, cluster DNS and other pods are not affected here; each
-# namespace's own default-deny policies decide those.
+# Cluster-wide baseline for workloads. Pods in every namespace except the platform's own may never
+# reach the home network (router, other devices) or the node itself (Talos API, kubelet), whatever their
+# own network policies allow. Cilium deny rules win over allow rules, so a project can't loosen this.
+# The Kubernetes API runs on the node: only a few API clients may reach it, and then only its port
+# (6443). Internet, cluster DNS and other pods are not affected here; each namespace's own default-deny
+# policies decide those. Every policy only denies ("enableDefaultDeny: false"): none of them switches a
+# namespace without its own policies to default-deny.
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: baseline-workload-egress
 spec:
-  description: Workloads never reach the home network or the node.
+  description: Workloads never reach the home network.
   endpointSelector:
     matchExpressions:
       # Platform namespaces that need the node or the API (CoreDNS, Flux, Prometheus scraping the
@@ -24,12 +26,10 @@ spec:
           - kubelet-serving-cert-approver
           - cilium-secrets
           - kubevirt
-  # Only deny: this policy must not switch namespaces without their own policies to default-deny.
   enableDefaultDeny:
     egress: false
     ingress: false
   egressDeny:
-    - toEntities: [host, remote-node]
     - toCIDRSet:
         - cidr: 192.168.0.0/16
         - cidr: 172.16.0.0/12
@@ -37,14 +37,13 @@ spec:
         - cidr: 100.64.0.0/10
         - cidr: 169.254.0.0/16
 ---
-# Kubernetes API: denied to workloads like the above, except edo-lab (EnjoyDevOps's lab controller),
-# operators that need only the API, and CloudNativePG's database pods.
+# The node and the Kubernetes API: denied entirely to every workload that isn't an API client.
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: baseline-workload-api
+  name: baseline-workload-node
 spec:
-  description: Workloads never reach the Kubernetes API (edo-lab, operators and CloudNativePG database pods excepted).
+  description: Workloads never reach the node or the Kubernetes API.
   endpointSelector:
     matchExpressions:
       - key: k8s:io.kubernetes.pod.namespace
@@ -58,17 +57,79 @@ spec:
           - kubelet-serving-cert-approver
           - cilium-secrets
           - kubevirt
-          # Creates the learner VMs through the Kubernetes API.
+          # EnjoyDevOps's lab controller (creates the learner VMs).
           - edo-lab
-          # Operators that only need the API (they stay under the home-network and node rule above).
+          # Operators that need only the API.
           - cert-manager
           - cnpg-system
-      # CloudNativePG's database pods manage themselves through the API. Only the operator may set this
-      # label (cnpg-cluster-label.yaml).
+      # CloudNativePG's database pods manage themselves through the API (see below).
       - key: k8s:cnpg.io/cluster
         operator: DoesNotExist
   enableDefaultDeny:
     egress: false
     ingress: false
   egressDeny:
-    - toEntities: [kube-apiserver]
+    - toEntities: [host, remote-node, kube-apiserver]
+---
+# API clients (edo-lab, cert-manager, the CloudNativePG operator): the node only on the API's port.
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: baseline-api-clients-node
+spec:
+  description: API client namespaces reach the node only on the Kubernetes API port.
+  endpointSelector:
+    matchExpressions:
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: In
+        values:
+          - edo-lab
+          - cert-manager
+          - cnpg-system
+  enableDefaultDeny:
+    egress: false
+    ingress: false
+  egressDeny:
+    - toEntities: [host, remote-node]
+      toPorts:
+        - ports:
+            - {port: "1", endPort: 6442, protocol: TCP}
+            - {port: "6444", endPort: 65535, protocol: TCP}
+            - {port: "1", endPort: 65535, protocol: UDP}
+---
+# CloudNativePG's database pods, in project namespaces: the node only on the API's port. Only the
+# operator may set the label cnpg.io/cluster (cnpg-cluster-label.yaml).
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: baseline-cnpg-node
+spec:
+  description: CloudNativePG database pods reach the node only on the Kubernetes API port.
+  endpointSelector:
+    matchExpressions:
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: NotIn
+        values:
+          - kube-system
+          - flux-system
+          - monitoring
+          - tailscale
+          - local-path-storage
+          - kubelet-serving-cert-approver
+          - cilium-secrets
+          - kubevirt
+          - edo-lab
+          - cert-manager
+          - cnpg-system
+      - key: k8s:cnpg.io/cluster
+        operator: Exists
+  enableDefaultDeny:
+    egress: false
+    ingress: false
+  egressDeny:
+    - toEntities: [host, remote-node]
+      toPorts:
+        - ports:
+            - {port: "1", endPort: 6442, protocol: TCP}
+            - {port: "6444", endPort: 65535, protocol: TCP}
+            - {port: "1", endPort: 65535, protocol: UDP}
