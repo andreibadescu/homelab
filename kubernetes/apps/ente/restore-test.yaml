@@ -1,0 +1,125 @@
+# Monthly restore test: downloads the latest Ente backup from R2, restores the database into a
+# throwaway PostgreSQL in the same pod and compares row counts with the live database, and compares
+# the restored files with the live object storage. A failure raises the KubeJobFailed alert. Run it
+# any time with: kubectl -n ente create job restore-test-now --from=cronjob/ente-restore-test
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ente-restore-test
+  namespace: ente
+spec:
+  schedule: "0 5 1 * *"
+  timeZone: Europe/Bucharest
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 21600
+      template:
+        metadata:
+          # Same network access as the backup: R2 and the live database (for the comparison).
+          labels: {app: ente-backup}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+          initContainers:
+            - name: restore
+              image: docker.io/restic/restic:0.19.1
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  restic restore latest --host ente --tag database --target /restore
+                  restic restore latest --host ente --tag files --target /restore
+                  if diff -r /restore/data /data >/dev/null; then
+                    echo "files: restored copy identical to live storage ($(find /restore/data -type f | wc -l) files)"
+                  else
+                    echo "files: differences between backup and live storage (changes since the backup?):"
+                    diff -rq /restore/data /data | head -20
+                  fi
+              envFrom:
+                - secretRef: {name: ente-backup}
+              env:
+                - {name: RESTIC_CACHE_DIR, value: /tmp/cache}
+                - {name: TMPDIR, value: /tmp}
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 1Gi}
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: restore, mountPath: /restore}
+                - {name: s3-data, mountPath: /data, readOnly: true}
+                - {name: tmp, mountPath: /tmp}
+            # Throwaway PostgreSQL (a sidecar: it stops when the check below finishes).
+            - name: scratch-db
+              image: docker.io/library/postgres:15.20-alpine
+              restartPolicy: Always
+              env:
+                - {name: POSTGRES_PASSWORD, value: restore-test}
+                - {name: PGDATA, value: /pgdata/data}
+              startupProbe:
+                exec: {command: [pg_isready, -U, postgres]}
+                periodSeconds: 2
+                failureThreshold: 60
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+              securityContext:
+                runAsUser: 70
+                runAsGroup: 70
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: pgdata, mountPath: /pgdata}
+                - {name: pgrun, mountPath: /var/run/postgresql}
+                - {name: tmp, mountPath: /tmp}
+          containers:
+            - name: verify-database
+              image: docker.io/library/postgres:15.20-alpine
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  export PGPASSWORD=restore-test
+                  createdb -h localhost -U postgres restored
+                  pg_restore -h localhost -U postgres -d restored --no-owner --no-privileges --exit-on-error /restore/work/ente_db.dump
+                  echo "database: restored into a scratch PostgreSQL; row counts restored / live:"
+                  failed=0
+                  for t in users subscriptions collections files object_keys; do
+                    r=$(PGPASSWORD=restore-test psql -h localhost -U postgres -d restored -tAc "select count(*) from $t")
+                    l=$(PGPASSWORD="$LIVE_PASSWORD" psql -h ente-postgres -U pguser -d ente_db -tAc "select count(*) from $t")
+                    echo "  $t: $r / $l"
+                    [ "$r" -gt 0 ] || [ "$l" -eq 0 ] || failed=1
+                  done
+                  [ "$failed" -eq 0 ] && echo "RESTORE TEST PASSED" || { echo "RESTORE TEST FAILED"; exit 1; }
+              env:
+                - name: LIVE_PASSWORD
+                  valueFrom: {secretKeyRef: {name: ente-secrets, key: POSTGRES_PASSWORD}}
+              resources:
+                requests: {cpu: 20m, memory: 32Mi}
+                limits: {memory: 256Mi}
+              securityContext:
+                runAsUser: 70
+                runAsGroup: 70
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: restore, mountPath: /restore, readOnly: true}
+                - {name: tmp, mountPath: /tmp}
+          volumes:
+            - {name: restore, emptyDir: {}}
+            - {name: pgdata, emptyDir: {}}
+            - {name: pgrun, emptyDir: {}}
+            - {name: tmp, emptyDir: {}}
+            - name: s3-data
+              persistentVolumeClaim: {claimName: data-ente-s3-0, readOnly: true}
