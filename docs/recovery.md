@@ -77,9 +77,18 @@ or after a reinstall from the USB stick (**the whole disk is wiped, including th
 3. Flux deploys everything from Git within a few minutes: `flux get kustomizations -A`.
 4. App data:
    - **Data volume kept**: volumes live in `<namespace>/<claim>/` folders, so the recreated claims
-     find their data again by themselves.
-   - **Disk wiped**: restore the apps' data from backups.
+     find their data again by themselves: Ente, the registry's images, projects' databases.
+   - **Disk wiped**:
+     - Ente: restore from its backups (`docs/backups.md`).
+     - Projects' databases (CloudNativePG): each project restores its cluster from its point-in-time
+       archive in R2, from its own repository (`docs/databases.md`).
+     - The registry starts empty. Public images come back through its cache (or straight from the
+       internet: the node falls back), and the platform's Kaniko image is rebuilt by its Job. Projects
+       rebuild their own images (EnjoyDevOps: `make images` and `make lab-images` in its repository)
+       before their pods can start.
 5. Re-share the app devices in Tailscale if step 1 removed shared ones.
+6. Project agents need new kubeconfigs (`make tenant-kubeconfig TENANT=<project>`, and `ACCOUNT=operator`
+   when needed): the old tokens belong to the old cluster.
 
 ## Network layer (Cilium)
 
