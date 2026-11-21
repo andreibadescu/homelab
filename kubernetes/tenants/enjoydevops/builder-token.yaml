@@ -1,8 +1,0 @@
-# Token for the builder ServiceAccount. Holds no value in Git: Kubernetes fills it in.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: builder-token
-  namespace: enjoydevops-builds
-  annotations: {kubernetes.io/service-account.name: builder}
-type: kubernetes.io/service-account-token

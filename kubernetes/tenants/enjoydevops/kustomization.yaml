@@ -9,5 +9,3 @@ resources:
   - flux-source.sops.yaml
   - flux.yaml
   - registry-push.sops.yaml
-  - builds.yaml
-  - builder-token.yaml

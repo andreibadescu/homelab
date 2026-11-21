@@ -11,7 +11,7 @@ From its fence in `kubernetes/tenants/<project>/` (EnjoyDevOps: `enjoydevops-bui
 |---|---|
 | Namespace `<project>-builds` | Pod Security `baseline` (Kaniko runs as root inside its own container, with no extra rights). Outgoing: DNS, the registry, the internet. Never the home network, the node or the Kubernetes API. |
 | Push login | Secret `registry-push` (dockerconfigjson for `zot.registry.svc.cluster.local:5000`), valid only for `<project>/**`. Build pods mount it; the project's kubeconfig can't read it. |
-| Build account | ServiceAccount `builder`: create and delete pods (including attach), read their logs, Jobs, volume claims, events. No Secrets, no exec, nothing outside its namespace. |
+| Build account (optional) | ServiceAccount `builder`: create and delete pods (including attach), read their logs, Jobs, volume claims, events. No Secrets, no exec, nothing outside its namespace.  EnjoyDevOps has none: its agent builds with the owner's admin kubeconfig (Andrei's decision, 2026-11-21). |
 | Kubeconfig | `make tenant-kubeconfig TENANT=<project>` writes `~/.homelab/<project>-builder.kubeconfig` (works on the home network). |
 | Quota | EnjoyDevOps: 4 CPUs and 6 GiB of memory limits, 30 GiB of volumes, 4 pods, 1 KVM device. PriorityClass `builds`: lowest, never evicts anything. |
 | Scratch volumes | StorageClass `local-path-scratch`: on the data volume, deleted with their claim. Allowed only in build namespaces. |
@@ -42,7 +42,7 @@ OVERRIDES=$(cat <<JSON
   "items":[{"key":".dockerconfigjson","path":"config.json"}]}}]}}
 JSON
 )
-git archive --format=tar HEAD | gzip | kubectl --kubeconfig ~/.homelab/enjoydevops-builder.kubeconfig \
+git archive --format=tar HEAD | gzip | kubectl --kubeconfig ~/.homelab/kubeconfig \
   -n enjoydevops-builds run "build-edo-$SHA" --image=registry.homelab.internal/platform/kaniko:v1.25.23 \
   --restart=Never -i --overrides="$OVERRIDES"
 ```
