@@ -87,8 +87,8 @@ or after a reinstall from the USB stick (**the whole disk is wiped, including th
        rebuild their own images (EnjoyDevOps: `make images` and `make lab-images` in its repository)
        before their pods can start.
 5. Re-share the app devices in Tailscale if step 1 removed shared ones.
-6. Project agents need new kubeconfigs (`make tenant-kubeconfig TENANT=<project>`, and `ACCOUNT=operator`
-   when needed): the old tokens belong to the old cluster.
+6. Project agents need new kubeconfigs (`make tenant-kubeconfig TENANT=<project>`): the old tokens belong
+   to the old cluster.
 
 ## Network layer (Cilium)
 
