@@ -58,9 +58,11 @@ permissions) and delete what the test created.
 
 Projects with their own repositories (today EnjoyDevOps) are fenced in `kubernetes/tenants/<project>/`.
 Their manifests, images, database, backup jobs, restores and cutovers belong to the project's repository
-and its own agent; the homelab agent changes only this repository and the platform. A project agent gets
-narrow kubeconfigs from `make tenant-kubeconfig TENANT=<project>` (builds) and `ACCOUNT=operator` (exec
-and port-forward in its namespaces, 24-hour token).
+and its own agent; the homelab agent changes only this repository and the platform. A project agent gets a
+narrow kubeconfig from `make tenant-kubeconfig TENANT=<project>` (its builds namespace). For one-off work
+in its app namespaces (a restore, a cutover), add an operator account like the one EnjoyDevOps had for its
+cutover (git history of `kubernetes/tenants/enjoydevops/operator.yaml`, removed afterwards) and use
+`ACCOUNT=operator` (24-hour token).
 
 Coordination with the EnjoyDevOps agent happens through files in the owner's private notes folder
 `~/p/homelab-notes/` (outside this repository): `homelab-to-enjoydevops.md` holds messages from the

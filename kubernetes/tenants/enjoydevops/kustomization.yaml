@@ -11,4 +11,3 @@ resources:
   - registry-push.sops.yaml
   - builds.yaml
   - builder-token.yaml
-  - operator.yaml
