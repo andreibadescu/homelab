@@ -103,6 +103,7 @@ works as a VS Code / Windsurf Dev Container.
 | `make fmt` / `make validate` | Format and validate the OpenTofu code |
 | `make upgrade`, then `make lock` | Move providers to new versions and record hashes for all platforms |
 | `make restic APP=<app> ARGS="..."` | restic against an app's backup repository, without the cluster ([docs/backups.md](docs/backups.md)) |
+| `make tenant-kubeconfig TENANT=<project> [ACCOUNT=operator]` | Narrow kubeconfig for a project's agent: its builds namespace, or exec and port-forward with a 24-hour token ([docs/builds.md](docs/builds.md)) |
 | `make mac-dns` | On the admin Mac: resolve `*.ts.net` names through Tailscale only (asks for your password) |
 
 The Makefile passes your `gh auth token` to OpenTofu through the environment (for Flux's deploy key
