@@ -1,5 +1,5 @@
 #!/bin/sh
-# Runs the same checks as CI before every push (make check, in the toolbox). Installed by `make hooks`.
+# Runs the same checks as CI before every push (make check). Installed by `make hooks`.
 # Skip once with `git push --no-verify`, for emergencies only.
 set -e
 cd "$(git rev-parse --show-toplevel)"

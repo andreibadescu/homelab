@@ -11,7 +11,7 @@ Git. Apps are reached over Tailscale; the only public part is a read-only status
 
 ```mermaid
 flowchart LR
-  dev[Mac: make plan / apply<br/>toolbox container] -->|OpenTofu| talos[Talos node<br/>Secure Boot, TPM-encrypted disks]
+  dev[Mac: make plan / apply<br/>tools pinned with mise] -->|OpenTofu| talos[Talos node<br/>Secure Boot, TPM-encrypted disks]
   git[(GitHub repo)] -->|Flux, every minute| k8s
   talos --> k8s[Kubernetes + Cilium]
   k8s --> apps[Ente, monitoring,<br/>website checks]
@@ -54,7 +54,7 @@ The homelab tailnet holds only the cluster's devices. People reach an app throug
 | `kubernetes/infrastructure/` | Platform components (one folder each) |
 | `kubernetes/apps/` | Applications (one folder each) |
 | `kubernetes/tenants/` | Projects with their own repositories: their fence and the Flux sync of their repository |
-| `.devcontainer/` | The toolbox image every command runs in |
+| `mise.toml` | Every tool the commands use, pinned exactly |
 | `scripts/check.sh` | All repository checks (`make check`, also run by CI) |
 | `docs/` | BIOS checklist, recovery runbook, backups and restores, registry, workflow, external services |
 | `renovate.json` | Automatic version updates |
@@ -67,7 +67,7 @@ The homelab tailnet holds only the cluster's devices. People reach an app throug
   built-in manifests when a cluster is created.
 - **Everything in Kubernetes**: edit `kubernetes/` and push. Flux applies it within a minute.
 - **Versions**: everything tracks the newest stable release. [Renovate](renovate.json) opens pull
-  requests; Talos, Kubernetes and Flux bumps update OpenTofu and the toolbox together.
+  requests; Talos, Kubernetes and Flux bumps update OpenTofu and `mise.toml` together.
 
 ## CI/CD
 
@@ -75,7 +75,7 @@ How a change gets in: [docs/workflow.md](docs/workflow.md) (branch, `make check`
 merge once CI passes; rules for people and agents in [AGENTS.md](AGENTS.md)).
 
 - **CI** ([.github/workflows/ci.yaml](.github/workflows/ci.yaml)) runs `make check` on every pull
-  request and push, inside the toolbox: OpenTofu format and validation, every Kubernetes manifest
+  request and push: OpenTofu format and validation, every Kubernetes manifest
   rendered and validated against schemas (including CRDs), a check that every Secret is
   SOPS-encrypted, yamllint, shellcheck, actionlint, gitleaks over the whole history, and Renovate's
   config validator.
@@ -84,17 +84,17 @@ merge once CI passes; rules for people and agents in [AGENTS.md](AGENTS.md)).
 - **CD for the node** (`tofu/`) is deliberately manual: `make plan` and `make apply` from the admin
   Mac. GitHub can't reach the home network and never holds the age key.
 
-## Toolbox and commands
+## Tools and commands
 
-Every command runs in a container built from [.devcontainer/Dockerfile](.devcontainer/Dockerfile)
-(OpenTofu, talosctl, kubectl, Helm, Flux, sops, age). Downloads are checksum-verified; `age` comes
-from Debian's signed packages. The host needs only **Docker** (for example Colima) and **make**.
-The toolbox mounts the repo, `~/.homelab` (admin credentials) and the age key (read-only), and also
-works as a VS Code / Windsurf Dev Container.
+Every tool (OpenTofu, talosctl, kubectl, Helm, Flux, sops, age, restic, linters) is pinned in
+[mise.toml](mise.toml) and installed by `make tools` (mise verifies checksums for aqua-backed tools). The Mac
+needs only **mise**, **make** and **python3**; commands run directly, with the credentials in `~/.homelab` and
+the age key at its usual path. CI installs the same versions with mise's GitHub action.
 
 | Command | What |
 |---|---|
-| `make shell` | Shell inside the toolbox |
+| `make tools` | Install the pinned tools (once, and after a version bump) |
+| `make shell` | Shell with the pinned tools on PATH |
 | `make plan` / `make apply` / `make output` | OpenTofu (`make init` first on a fresh clone) |
 | `make rebuild` | Install and bootstrap a node in maintenance mode again, keeping the cluster's secrets ([docs/recovery.md](docs/recovery.md)) |
 | `make creds` | Write `~/.homelab/talosconfig` and `~/.homelab/kubeconfig`, and record their expiry |

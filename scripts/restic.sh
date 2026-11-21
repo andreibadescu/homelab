@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # restic against an app's backup repository, with the credentials from its encrypted Secret
-# (kubernetes/apps/<app>/backup.sops.yaml). Runs in the toolbox, so it works without the cluster:
+# (kubernetes/apps/<app>/backup.sops.yaml). Works without the cluster:
 # all it needs is this repository and the age key. See docs/backups.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
