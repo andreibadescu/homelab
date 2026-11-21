@@ -1,7 +1,6 @@
 # enjoydevops.io, the EnjoyDevOps site: DNS (tunnel, mail, Brevo) and the edge rules that protect sign-up.
 # Adopted from the zone as it was configured by hand and by EnjoyDevOps's scripts/cloudflare-setup.py; the
-# import blocks only take effect once. Email Routing (forwarding addresses) is not here yet: the OpenTofu token
-# has no Email Routing permission.
+# import blocks only take effect once.
 
 data "cloudflare_zone" "enjoydevops" {
   filter = { name = "enjoydevops.io" }
@@ -250,4 +249,90 @@ resource "cloudflare_ruleset" "edo_rate_limit" {
 import {
   to = cloudflare_ruleset.edo_rate_limit
   id = "zones/c884632e448ebc555c4c947a3b80b30c/33ca05d00ae24275bde4d1ee40c3a7fa"
+}
+
+# Email Routing: hello@, privacy@, security@, abuse@ and andrei@ forward to Andrei's inbox. The address is personal,
+# so it comes from the encrypted secrets file, never from this public repository.
+locals {
+  edo_forward_inbox = data.sops_file.secrets.data["enjoydevops_forward_inbox"]
+}
+
+resource "cloudflare_email_routing_address" "edo_inbox" {
+  account_id = data.cloudflare_zone.enjoydevops.account.id
+  email      = local.edo_forward_inbox
+}
+
+import {
+  to = cloudflare_email_routing_address.edo_inbox
+  id = "2611262009a57f56fe611c4d7d6f6339/e290bd68a36f47e2a0fe7bd8299d69dd"
+}
+
+resource "cloudflare_email_routing_rule" "edo_abuse" {
+  zone_id  = data.cloudflare_zone.enjoydevops.id
+  name     = "abuse"
+  enabled  = true
+  priority = 0
+  matchers = [{ type = "literal", field = "to", value = "abuse@enjoydevops.io" }]
+  actions  = [{ type = "forward", value = [local.edo_forward_inbox] }]
+}
+
+import {
+  to = cloudflare_email_routing_rule.edo_abuse
+  id = "c884632e448ebc555c4c947a3b80b30c/2f86400b561a445a9897c467e1a2f8a8"
+}
+
+resource "cloudflare_email_routing_rule" "edo_andrei" {
+  zone_id  = data.cloudflare_zone.enjoydevops.id
+  name     = "andrei"
+  enabled  = true
+  priority = 0
+  matchers = [{ type = "literal", field = "to", value = "andrei@enjoydevops.io" }]
+  actions  = [{ type = "forward", value = [local.edo_forward_inbox] }]
+}
+
+import {
+  to = cloudflare_email_routing_rule.edo_andrei
+  id = "c884632e448ebc555c4c947a3b80b30c/eba3c8b9c8184d7da67d9f290dbdd8ab"
+}
+
+resource "cloudflare_email_routing_rule" "edo_hello" {
+  zone_id  = data.cloudflare_zone.enjoydevops.id
+  name     = "hello"
+  enabled  = true
+  priority = 0
+  matchers = [{ type = "literal", field = "to", value = "hello@enjoydevops.io" }]
+  actions  = [{ type = "forward", value = [local.edo_forward_inbox] }]
+}
+
+import {
+  to = cloudflare_email_routing_rule.edo_hello
+  id = "c884632e448ebc555c4c947a3b80b30c/6ae5f52416ea49698194752e2a559422"
+}
+
+resource "cloudflare_email_routing_rule" "edo_privacy" {
+  zone_id  = data.cloudflare_zone.enjoydevops.id
+  name     = "privacy"
+  enabled  = true
+  priority = 0
+  matchers = [{ type = "literal", field = "to", value = "privacy@enjoydevops.io" }]
+  actions  = [{ type = "forward", value = [local.edo_forward_inbox] }]
+}
+
+import {
+  to = cloudflare_email_routing_rule.edo_privacy
+  id = "c884632e448ebc555c4c947a3b80b30c/937b57afa540450f9bbab48bc1d2cec4"
+}
+
+resource "cloudflare_email_routing_rule" "edo_security" {
+  zone_id  = data.cloudflare_zone.enjoydevops.id
+  name     = "security"
+  enabled  = true
+  priority = 0
+  matchers = [{ type = "literal", field = "to", value = "security@enjoydevops.io" }]
+  actions  = [{ type = "forward", value = [local.edo_forward_inbox] }]
+}
+
+import {
+  to = cloudflare_email_routing_rule.edo_security
+  id = "c884632e448ebc555c4c947a3b80b30c/3372c924c5b149859fac68ed3e70d6e9"
 }
