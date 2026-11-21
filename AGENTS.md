@@ -11,6 +11,9 @@ For people and AI agents alike. The details are in [docs/workflow.md](docs/workf
   ("Generated with", "Co-Authored-By"). Pass the identity per command
   (`git -c user.name=... -c user.email=...`) instead of changing git configuration. The same applies to
   pull request texts: no AI attribution.
+- **Signed commits:** sign every commit with Andrei's SSH key, per command:
+  `-c gpg.format=ssh -c user.signingkey="$HOME/.ssh/id_ed25519.pub" -c commit.gpgsign=true`. Squash merges are signed
+  by GitHub.
 - **Secrets:** never print, log or commit values. They live in `*.sops.yaml` files; `make check`
   rejects plaintext Secrets and runs gitleaks over the history.
 - **Versions:** pin exact versions and only use releases at least 7 days old.
@@ -26,7 +29,7 @@ Read `README.md` (what runs and why), then `docs/workflow.md`, then the doc for 
 | Node, disk layout, rebuild, recovery passphrase | `docs/recovery.md`, `docs/bios-latitude-5550.md` | `tofu/talos.tf`, `Makefile` |
 | Network rules (baseline, per namespace) | README "Security" | `kubernetes/infrastructure/policies/` |
 | Registry (Zot) and the node's mirrors | `docs/registry.md` | `kubernetes/infrastructure/registry/`, `tofu/talos.tf` |
-| Home builds (Kaniko, build namespaces) | `docs/builds.md` | `kubernetes/apps/platform-builds/`, `kubernetes/tenants/*/builds.yaml` |
+| Home builds (Kaniko, build namespaces) | `docs/builds.md` | `kubernetes/apps/platform-builds/`, `kubernetes/tenants/*/` (build namespace, quota, registry login) |
 | Databases (CloudNativePG) | `docs/databases.md` | `kubernetes/infrastructure/cnpg/` |
 | Backups and restores | `docs/backups.md` | `tofu/backups.tf`, `kubernetes/apps/ente/` |
 | Projects with their own repositories | `docs/new-project.md` | `kubernetes/tenants/` |
@@ -62,8 +65,9 @@ this repository holds only the platform and the fence. Since 2026-11-21 one agen
 homelab and EnjoyDevOps: keep the boundary by repository (platform changes here, app changes in the
 project's repository, each through its own pull requests).
 
-A project's own automation gets a narrow kubeconfig from `make tenant-kubeconfig TENANT=<project>` (its
-builds namespace). For one-off work in its app namespaces (a restore, a cutover), add an operator account
+A project's own automation can get a narrow kubeconfig from `make tenant-kubeconfig TENANT=<project>` (its
+builds namespace). EnjoyDevOps doesn't: by Andrei's decision (2026-11-21) its agent, the same one that maintains this
+repository, uses the admin kubeconfig for builds and operations, changing configuration only through Git. For one-off work in its app namespaces (a restore, a cutover), add an operator account
 like the one EnjoyDevOps had for its cutover (git history of `kubernetes/tenants/enjoydevops/operator.yaml`),
 use `ACCOUNT=operator` (24-hour token), and remove it afterwards.
 
