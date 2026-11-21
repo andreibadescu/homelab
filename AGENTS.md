@@ -54,20 +54,18 @@ permissions) and delete what the test created.
   and a version in the Job name makes a new build run once.
 - An R2 bucket must be empty before it can be deleted: empty it with a lifecycle rule first.
 
-## Projects and their agents
+## Projects
 
 Projects with their own repositories (today EnjoyDevOps) are fenced in `kubernetes/tenants/<project>/`.
-Their manifests, images, database, backup jobs, restores and cutovers belong to the project's repository
-and its own agent; the homelab agent changes only this repository and the platform. A project agent gets a
-narrow kubeconfig from `make tenant-kubeconfig TENANT=<project>` (its builds namespace). For one-off work
-in its app namespaces (a restore, a cutover), add an operator account like the one EnjoyDevOps had for its
-cutover (git history of `kubernetes/tenants/enjoydevops/operator.yaml`, removed afterwards) and use
-`ACCOUNT=operator` (24-hour token).
+Their manifests, images, database, backup jobs, restores and cutovers belong to the project's repository;
+this repository holds only the platform and the fence. Since 2026-11-21 one agent maintains both the
+homelab and EnjoyDevOps: keep the boundary by repository (platform changes here, app changes in the
+project's repository, each through its own pull requests).
 
-Coordination with the EnjoyDevOps agent happens through files in the owner's private notes folder
-`~/p/homelab-notes/` (outside this repository): `homelab-to-enjoydevops.md` holds messages from the
-homelab agent (newest last), `enjoydevops-answers.md` its replies. The owner tells each agent when a new
-message is there.
+A project's own automation gets a narrow kubeconfig from `make tenant-kubeconfig TENANT=<project>` (its
+builds namespace). For one-off work in its app namespaces (a restore, a cutover), add an operator account
+like the one EnjoyDevOps had for its cutover (git history of `kubernetes/tenants/enjoydevops/operator.yaml`),
+use `ACCOUNT=operator` (24-hour token), and remove it afterwards.
 
 ## Open work
 

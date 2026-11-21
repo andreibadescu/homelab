@@ -34,6 +34,7 @@ flowchart LR
 | Observability | Prometheus, Alertmanager (alerts to ntfy), Grafana with dashboards as code, Loki (logs), Tempo (traces), Alloy (log collector and OpenTelemetry collector) | `kubernetes/infrastructure/monitoring` |
 | Apps | Ente Photos and Locker (end-to-end encrypted), default-deny network policies | `kubernetes/apps/ente` |
 | Public showcase | A separate read-only Grafana with one public dashboard, behind a Cloudflare Tunnel | `kubernetes/apps/showcase`, `kubernetes/apps/cloudflared`, `tofu/cloudflare.tf` |
+| Virtual machines | KubeVirt: EnjoyDevOps's learner labs as isolated VMs, and `/dev/kvm` for lab image builds | `kubernetes/infrastructure/kubevirt` |
 | Databases | CloudNativePG for projects' PostgreSQL, with point-in-time recovery to R2 ([docs/databases.md](docs/databases.md)) | `kubernetes/infrastructure/cnpg`, `kubernetes/infrastructure/cert-manager` |
 | Builds | Images built at home with Kaniko in each project's build namespace, never on GitHub Actions ([docs/builds.md](docs/builds.md)) | `kubernetes/apps/platform-builds`, `kubernetes/tenants/*` |
 | Projects | Each project's fence: namespaces, quotas, network rules, permissions, Flux sync of its own repository ([docs/new-project.md](docs/new-project.md)) | `kubernetes/tenants` |
@@ -49,9 +50,10 @@ The homelab tailnet holds only the cluster's devices. People reach an app throug
 | Path | What |
 |---|---|
 | `tofu/` | OpenTofu: Talos image, machine config, install and bootstrap, Cilium, Flux bootstrap. State is encrypted and committed. |
-| `kubernetes/clusters/homelab/` | Flux entry point: Flux itself, then the `infrastructure` and `apps` stages |
+| `kubernetes/clusters/homelab/` | Flux entry point: Flux itself, then the `infrastructure`, `apps` and `tenants` stages |
 | `kubernetes/infrastructure/` | Platform components (one folder each) |
 | `kubernetes/apps/` | Applications (one folder each) |
+| `kubernetes/tenants/` | Projects with their own repositories: their fence and the Flux sync of their repository |
 | `.devcontainer/` | The toolbox image every command runs in |
 | `scripts/check.sh` | All repository checks (`make check`, also run by CI) |
 | `docs/` | BIOS checklist, recovery runbook, backups and restores, registry, workflow, external services |
