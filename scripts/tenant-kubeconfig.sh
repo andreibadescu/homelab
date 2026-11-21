@@ -4,11 +4,11 @@
 #     long-lived token from the Secret builder-token.
 #   ACCOUNT=operator: ~/.homelab/<tenant>-operator.kubeconfig, exec/port-forward/restarts in the app
 #     namespaces, token valid for 24 hours (run again for a new one).
-# Runs in the toolbox with the admin kubeconfig.
+# Runs with the admin kubeconfig (~/.homelab/kubeconfig).
 set -euo pipefail
 tenant=${1:?usage: make tenant-kubeconfig TENANT=<project> [ACCOUNT=builder|operator]}
 account=${2:-builder}
-admin=/root/.homelab/kubeconfig
+admin="${CRED_DIR:-$HOME/.homelab}/kubeconfig"
 case "$account" in
   builder)
     ns="$tenant-builds"
@@ -18,7 +18,7 @@ case "$account" in
     token=$(kubectl --kubeconfig "$admin" -n "$ns" create token operator --duration=24h) ;;
   *) echo "unknown account '$account' (builder or operator)" >&2; exit 1 ;;
 esac
-out="/root/.homelab/$tenant-$account.kubeconfig"
+out="${CRED_DIR:-$HOME/.homelab}/$tenant-$account.kubeconfig"
 server=$(kubectl --kubeconfig "$admin" config view --raw --minify -o jsonpath='{.clusters[0].cluster.server}')
 ca=$(kubectl --kubeconfig "$admin" config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
 umask 077

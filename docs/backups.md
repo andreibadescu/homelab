@@ -35,7 +35,7 @@ and traces.
 
 ## Looking at backups from the Mac
 
-`make restic` runs restic in the toolbox with the app's credentials; it needs only this repository and
+`make restic` runs restic with the app's credentials; it needs only this repository and
 the age key, not the cluster:
 
 ```bash

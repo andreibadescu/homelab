@@ -10,17 +10,6 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Tool versions in the toolbox image",
-      "managerFilePatterns": [
-        "/(^|/)Dockerfile$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG \\S+_VERSION=(?<currentValue>\\S+)"
-      ],
-      "extractVersionTemplate": "^v?(?<version>.*)$"
-    },
-    {
-      "customType": "regex",
       "description": "Versions pinned as OpenTofu variable defaults",
       "managerFilePatterns": [
         "/\\.tf$/"
@@ -54,23 +43,26 @@
   },
   "packageRules": [
     {
-      "description": "Talos: the OS version (tofu) and talosctl (toolbox) move together",
+      "description": "Talos: the OS version (tofu) and talosctl (mise.toml) move together",
       "matchDepNames": [
-        "siderolabs/talos"
+        "siderolabs/talos",
+        "talosctl"
       ],
       "groupName": "Talos"
     },
     {
-      "description": "Kubernetes: the cluster version (tofu) and kubectl (toolbox) move together",
+      "description": "Kubernetes: the cluster version (tofu) and kubectl (mise.toml) move together",
       "matchDepNames": [
-        "kubernetes/kubernetes"
+        "kubernetes/kubernetes",
+        "kubectl"
       ],
       "groupName": "Kubernetes"
     },
     {
-      "description": "Flux: the installed version (tofu flux_version) and the flux CLI (toolbox) move together",
+      "description": "Flux: the installed version (tofu flux_version) and the flux CLI (mise.toml) move together",
       "matchDepNames": [
-        "fluxcd/flux2"
+        "fluxcd/flux2",
+        "flux2"
       ],
       "groupName": "Flux"
     },

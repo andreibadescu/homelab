@@ -37,8 +37,8 @@ Read `README.md` (what runs and why), then `docs/workflow.md`, then the doc for 
 
 **Access** (the owner's Mac; nothing secret is in the repository):
 
-- Every tool runs in the toolbox image (`make toolbox`, then the make targets or `make shell`), on Docker
-  via colima. Files mounted into it must live under `$HOME`: colima shares nothing else.
+- Tools are pinned in `mise.toml`: `make tools` once (and after a version bump), then the make targets run on the
+  Mac with those tools first on PATH; `make shell` opens a shell with them. No container or VM.
 - Credentials: `~/.homelab/kubeconfig` and `~/.homelab/talosconfig` (`make creds` writes new ones); the age
   key in `~/Library/Application Support/sops/age/keys.txt` decrypts every `*.sops.yaml`, including
   OpenTofu's state key and API tokens in `tofu/secrets.sops.yaml`; OpenTofu reads GitHub through

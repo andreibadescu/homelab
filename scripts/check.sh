@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# All repository checks; run inside the toolbox (`make check`), locally and in CI.
+# All repository checks (`make check`), locally and in CI, with the tools from mise.toml.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 step() { printf '\n== %s\n' "$*"; }
@@ -14,7 +14,8 @@ tofu -chdir="$work" validate
 rm -rf "$work"
 
 step "Kubernetes: render and validate against schemas"
-out=$(mktemp --suffix .yaml)
+outdir=$(mktemp -d)
+out="$outdir/rendered.yaml" # kubeconform reads only *.yaml files
 for dir in kubernetes/infrastructure kubernetes/apps kubernetes/clusters/homelab/flux-system; do
   kubectl kustomize "$dir" >>"$out"
   echo "---" >>"$out"
@@ -27,7 +28,7 @@ kubeconform -strict -summary -skip Secret,CustomResourceDefinition \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   "$out"
-rm -f "$out"
+rm -rf "$outdir"
 
 step "Secrets: every Secret and *.sops.yaml file is SOPS-encrypted"
 failed=0

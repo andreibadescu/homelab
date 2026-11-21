@@ -9,7 +9,7 @@ Cloudflare, GitHub or healthchecks.io. The only manual steps are the ones no API
 
 1. Branch from `main`: `git switch -c <topic>`.
 2. Change files, then run `make check`: the same checks as CI (OpenTofu, Kubernetes schemas, encrypted
-   secrets, lint, gitleaks), inside the toolbox. `make hooks` (once per clone) runs it automatically
+   secrets, lint, gitleaks), with the tools pinned in `mise.toml`. `make hooks` (once per clone) runs it automatically
    before every push.
 3. Commit as `Andrei Badescu <andrei@andreibadescu.com>`, without AI trailers.
 4. Push the branch and open a pull request: `gh pr create --fill`, then

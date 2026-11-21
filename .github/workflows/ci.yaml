@@ -1,5 +1,5 @@
 # Every pull request and push to main runs the same checks as `make check` locally: OpenTofu,
-# Kubernetes schemas, encrypted secrets, lint and gitleaks, inside the toolbox image.
+# Kubernetes schemas, encrypted secrets, lint and gitleaks, with the tools pinned in mise.toml.
 name: ci
 on:
   pull_request:
@@ -17,7 +17,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # gitleaks scans the whole history
-      - name: make check (in the toolbox)
+      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+      - name: make check
         env:
           CRED_DIR: ${{ runner.temp }}/homelab
           AGE_KEY: /dev/null
